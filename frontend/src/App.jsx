@@ -33,6 +33,24 @@ function friendlyError(error) {
   return friendlyErrors[error?.code] || error?.message || "Não foi possível concluir. Tenta novamente.";
 }
 
+// Alguns erros do backend (ou do proxy) vêm sem corpo.
+// Ler como texto evita o "Unexpected end of JSON input".
+async function readJson(res) {
+  const text = await res.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {};
+  }
+}
+
+function apiErrorMessage(res, data, fallback) {
+  if (data?.error) return data.error;
+  if (res.status === 404) return "A API não respondeu. Confirma que o backend está a correr na porta 3000.";
+  return fallback;
+}
+
 export default function App() {
   const [authTab, setAuthTab] = useState("register");
   const [name, setName] = useState("");
@@ -63,8 +81,8 @@ export default function App() {
     }
     try {
       const res = await fetch(`${apiBase}/services?userId=${firebaseUser.uid}`);
-      if (!res.ok) throw new Error("Erro ao carregar serviços");
-      const data = await res.json();
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao carregar serviços"));
       setOwnServices(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
@@ -177,8 +195,8 @@ export default function App() {
           email: user.email,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro ao atualizar perfil");
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao atualizar perfil"));
 
       const newName = event.target.name.value;
       await updateProfile(user, { displayName: newName });
@@ -237,8 +255,8 @@ export default function App() {
           location: event.target.location.value,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro ao criar serviço");
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao criar serviço"));
 
       setOwnServices((prev) => [data, ...prev]);
       notify("Serviço criado com sucesso!");
