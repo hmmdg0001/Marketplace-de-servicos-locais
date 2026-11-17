@@ -8,6 +8,8 @@ import {
 } from "firebase/auth";
 import { auth } from "./firebase.js";
 
+const apiBase = "/api";
+
 const friendlyErrors = {
   "auth/email-already-in-use": "Este email já tem uma conta. Tenta iniciar sessão.",
   "auth/invalid-email": "O email não parece estar correto.",
@@ -22,8 +24,6 @@ const friendlyErrors = {
   "auth/quota-exceeded": "O limite de pedidos do Firebase foi atingido. Tenta novamente mais tarde.",
 };
 
-const apiBase = "/api";
-
 export default function App() {
   const [mode, setMode] = useState("register");
   const [name, setName] = useState("");
@@ -35,13 +35,15 @@ export default function App() {
   const [authReady, setAuthReady] = useState(false);
   const [services, setServices] = useState([]);
   const [ownServices, setOwnServices] = useState([]);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileEmailSent, setProfileEmailSent] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const isRegister = mode === "register";
 
   useEffect(() => {
     onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setAuthReady(true);
-      // Quando o utilizador já está logado via Firebase, busca os seus serviços
       if (currentUser && authReady) {
         fetch("/api/services", {
           credentials: "include",
@@ -60,7 +62,6 @@ export default function App() {
           .then((res) => res.json())
           .then((data) => {
             if (data.user) setUser(Object.assign({}, data.user, { email: currentUser.email }));
-            // Buscar apenas os serviços deste utilizador
             return fetch(`/api/services?userId=${currentUser.uid}`, {
               credentials: "include",
             });
@@ -78,24 +79,20 @@ export default function App() {
     setBusy(true);
     try {
       if (isRegister) {
-        // Registar via Firebase Client
         const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
         await updateProfile(result.user, { displayName: name.trim() });
         setUser(result.user);
         setMessage("Conta criada. Bem-vindo/a ao ServiPerto!");
 
-        // Também registar no backend (MongoDB)
         await fetch(`${apiBase}/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: result.user.email, password: password, name }),
         });
       } else {
-        // Login via Firebase Client
         const result = await signInWithEmailAndPassword(auth, email.trim(), password);
         setMessage("Sessão iniciada com sucesso.");
 
-        // Login no backend (criar/obter usuário no MongoDB)
         await fetch(`${apiBase}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -124,6 +121,8 @@ export default function App() {
       setUser(null);
       setServices([]);
       setOwnServices([]);
+      setProfileEmailSent(false);
+      setShowProfile(false);
     } catch (e) {
       setMessage("Não foi possível terminar a sessão. Tenta novamente.");
     } finally {
@@ -131,7 +130,7 @@ export default function App() {
     }
   }
 
-  // Buscar serviços ao montar (quando authReady muda)
+  // Buscar serviços ao montar
   useEffect(() => {
     if (authReady && user) {
       fetch("/api/services")
@@ -147,6 +146,48 @@ export default function App() {
         .catch((err) => console.error("Erro:", err));
     }
   }, [authReady, user]);
+
+  // Função para atualizar perfil
+  async function handleProfileUpdate(event) {
+    event.preventDefault();
+    setProfileSaving(true);
+    try {
+      const { name, email } = event.target;
+      await fetch(`${apiBase}/auth/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.name.value,
+          email: email.email.value,
+        }),
+      });
+      setMessage("Perfil atualizado com sucesso!");
+      // Atualizar estado local do usuário
+      setUser(prev => prev ? { ...prev, name: name.name.value, email: email.email.value } : null);
+      setProfileSaving(false);
+    } catch (error) {
+      console.error("Erro ao atualizar perfil:", error);
+      setMessage("Erro ao atualizar perfil. Tenta novamente.");
+      setProfileSaving(false);
+    }
+  }
+
+  // Função para enviar email de verificação
+  async function handleSendVerification() {
+    setProfileEmailSent(false);
+    try {
+      await fetch(`${apiBase}/auth/send-verification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      setProfileEmailSent(true);
+      setMessage("Email de verificação enviado! Verifica a tua caixa de entrada.");
+    } catch (error) {
+      console.error("Erro ao enviar verificação:", error);
+      setMessage("Erro ao enviar email de verificação. Tenta novamente.");
+    }
+  }
 
   return (
     <main className="page-shell">
@@ -177,7 +218,16 @@ export default function App() {
             <h2>Olá, {user.displayName || "bem-vindo/a"}.</h2>
             <p className="form-subtitle">A tua conta ServiPerto está pronta.</p>
             <p className="account-email">{user.email}</p>
+
+            {/* Status de email verificado */}
+            {user.emailVerified !== undefined && (
+              <p className="form-message success">
+                {user.emailVerified ? 'Email verificado ✓' : 'Email não verificado'}
+              </p>
+            )}
+
             {message && <p className="form-message error" role="status">{message}</p>}
+
             <button className="submit-button" type="button" onClick={handleSignOut} disabled={busy}>
               {busy ? "A terminar sessão…" : "Terminar sessão"}
               <span aria-hidden="true">→</span>
@@ -202,9 +252,57 @@ export default function App() {
             )}
 
             {/* Botão para criar serviço */}
-            <button className="submit-button" onClick={() => setMode('create-service')} disabled={busy}>
+            <button className="submit-button" onClick={() => setMode('create-service') disabled={busy}>
               {busy ? "A criar serviço…" : "Criar serviço"}
             </button>
+
+            {/* Minhas definições section */}
+            {showProfile ? (
+              <div className="settings-section">
+                <h3>Minhas definições</h3>
+                
+                {/* Formulário de editar perfil */}
+                <form onSubmit={handleProfileUpdate}>
+                  <div className="setting-row">
+                    <label>Nome</label>
+                    <input type="text" name="name" value={user.name || ''} required />
+                  </div>
+                  <div className="setting-row">
+                    <label>Email</label>
+                    <input type="email" name="email" value={user.email || ''} readOnly />
+                  </div>
+                  
+                  {user.emailVerified ? (
+                    <p>Email verificado ✓</p>
+                  ) : (
+                    <>
+                      <button type="button" onClick={handleSendVerification} disabled={busy}>
+                        {busy ? "A enviar…" : "Enviar email de verificação"}
+                      </button>
+                      <p>{profileEmailSent ? 'Email enviado!' : ''}</p>
+                    </>
+                  )}
+
+                  <button type="submit" disabled={busy}>
+                    {busy ? "A salvar…" : "Guardar alterações"}
+                  </button>
+                  <button type="button" onClick={() => setShowProfile(false)} disabled={busy}>
+                    Cancelar
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <button className="submit-button" onClick={() => setShowProfile(true)} disabled={busy}>
+                {busy ? "A carregar…" : "Minhas definições"}
+              </button>
+            )}
+
+            {/* Botão para criar serviço */}
+            {ownServices.length === 0 && !showProfile && (
+              <button className="submit-button" onClick={() => setMode('create-service') disabled={busy}>
+                {busy ? "A criar serviço…" : "Criar serviço"}
+              </button>
+            )}
           </div>
         ) : (
           <div className="form-panel">

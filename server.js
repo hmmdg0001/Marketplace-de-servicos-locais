@@ -15,6 +15,7 @@ initializeFirebase();
 
 // Rotas da API
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/profile', require('./routes/profile'));
 app.use('/api/services', require('./routes/services'));
 
 // Rota raiz

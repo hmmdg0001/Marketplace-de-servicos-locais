@@ -59,4 +59,21 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// POST /api/auth/send-verification - Enviar email de verificação
+router.post('/send-verification', verifyIdToken, async (req, res) => {
+  try {
+    const uid = req.user.uid;
+    const admin = require('../config/firebase').admin;
+
+    await admin.auth().sendEmailVerification(uid);
+
+    res.json({
+      message: 'Email de verificação enviado. Verifica a tua caixa de entrada.',
+    });
+  } catch (error) {
+    console.error('Erro ao enviar email de verificação:', error.message);
+    res.status(500).json({ error: 'Erro ao enviar email de verificação' });
+  }
+});
+
 module.exports = router;
