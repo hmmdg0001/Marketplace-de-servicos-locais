@@ -484,7 +484,7 @@ export default function AccountPage() {
 
   return (
       <section className="auth-layout" id="inicio">
-        <div className="intro-panel">
+        <div className={`intro-panel ${authReady && user ? "intro-panel-account" : ""}`}>
           {authReady && user ? (
             <>
               <div className="eyebrow"><span className="eyebrow-dot" /> A minha conta</div>
