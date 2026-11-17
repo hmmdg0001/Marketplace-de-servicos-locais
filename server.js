@@ -13,6 +13,11 @@ app.use(express.json());
 connectDB();
 initializeFirebase();
 
+// Rotas da API
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/services', require('./routes/services'));
+
+// Rota raiz
 app.get('/', (req, res) => {
   res.json({ message: 'Marketplace de Serviços Locais API' });
 });
