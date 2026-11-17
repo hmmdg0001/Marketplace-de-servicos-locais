@@ -491,9 +491,9 @@ export default function AccountPage() {
               <h1>Olá, <em>{displayName || "bem-vindo/a"}</em>.</h1>
               <p className="intro-copy">Gere os teus serviços e pedidos a partir daqui.</p>
               <div className="account-quick-links">
-                <button className="submit-button" type="button" onClick={() => document.getElementById("meus-servicos")?.scrollIntoView({ behavior: "smooth" })}>
+                <a className="submit-button" href="/servicos">
                   Os meus serviços
-                </button>
+                </a>
                 <a className="submit-button" href="/pedidos">
                   Serviços que pedi
                 </a>
@@ -557,10 +557,10 @@ export default function AccountPage() {
               <span aria-hidden="true">→</span>
             </button>
 
-            {panel === null && (
-              <a className="submit-button" href="/servicos" style={{ maxWidth: 320, margin: "24px auto 0", display: "block", textAlign: "center" }}>
-                Ver os meus serviços
-              </a>
+            {panel === null && ownServices.length > 0 && (
+              <p className="field-hint" style={{ marginTop: 16, textAlign: "center" }}>
+                {ownServices.length} serviço(s) publicado(s).
+              </p>
             )}
 
             {/* Botões de ação - só aparecem quando nenhum painel está aberto */}
