@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { verifyIdToken } = require('../config/firebase');
+const { verifyIdToken, requireAuth } = require('../config/firebase');
 const User = require('../models/user');
 
 // POST /api/auth/register - Registar com Firebase + guardar no MongoDB
@@ -59,39 +59,40 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// POST /api/auth/send-verification - Enviar email de verificação
-router.post('/send-verification', verifyIdToken, async (req, res) => {
+// POST /api/auth/send-verification - Gerar link de verificação de email
+// Nota: o envio real do email é feito pelo SDK client no frontend (sendEmailVerification).
+router.post('/send-verification', requireAuth, async (req, res) => {
   try {
-    const uid = req.user.uid;
     const admin = require('../config/firebase').admin;
-
-    await admin.auth().sendEmailVerification(uid);
+    const link = await admin.auth().generateEmailVerificationLink(req.user.email);
 
     res.json({
-      message: 'Email de verificação enviado. Verifica a tua caixa de entrada.',
+      message: 'Link de verificação gerado.',
+      verificationLink: link,
     });
   } catch (error) {
-    console.error('Erro ao enviar email de verificação:', error.message);
-    res.status(500).json({ error: 'Erro ao enviar email de verificação' });
+    console.error('Erro ao gerar link de verificação:', error.message);
+    res.status(500).json({ error: error.message || 'Erro ao gerar link de verificação' });
   }
 });
 
-// POST /api/auth/reset-password - Enviar email de reset de palavra-passe
+// POST /api/auth/reset-password - Gerar link de reset de palavra-passe
+// Nota: o envio real do email é feito pelo SDK client no frontend (sendPasswordResetEmail).
 router.post('/reset-password', async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'Email obrigatório' });
 
     const admin = require('../config/firebase').admin;
-    await admin.auth().sendPasswordResetEmail(email);
+    const link = await admin.auth().generatePasswordResetLink(email);
 
     res.json({
-      message: 'Email de reset de palavra-passe enviado. Verifica a tua caixa de entrada.',
+      message: 'Link de reset de palavra-passe gerado.',
+      resetLink: link,
     });
   } catch (error) {
-    console.error('Erro ao enviar reset de palavra-passe:', error.message);
-    // Firebase retorna erro se o email não existir, mas respondemos sucesso por segurança
-    res.status(500).json({ error: error.message || 'Erro ao enviar reset de palavra-passe' });
+    console.error('Erro ao gerar link de reset:', error.message);
+    res.status(500).json({ error: error.message || 'Erro ao gerar link de reset' });
   }
 });
 

@@ -29,4 +29,23 @@ const verifyIdToken = async (idToken) => {
   }
 };
 
-module.exports = { initializeFirebase, verifyIdToken, admin };
+// Middleware Express para proteger rotas
+const requireAuth = async (req, res, next) => {
+  try {
+    const header = req.headers.authorization || '';
+    const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+
+    if (!token) {
+      return res.status(401).json({ error: 'Token de autenticação obrigatório' });
+    }
+
+    const decoded = await admin.auth().verifyIdToken(token);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    console.error('Falha na autenticação:', error.message);
+    return res.status(401).json({ error: 'Token inválido ou expirado' });
+  }
+};
+
+module.exports = { initializeFirebase, verifyIdToken, requireAuth, admin };

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
@@ -14,6 +16,9 @@ const friendlyErrors = {
   "auth/email-already-in-use": "Este email já tem uma conta. Tenta iniciar sessão.",
   "auth/invalid-email": "O email não parece estar correto.",
   "auth/invalid-credential": "Email ou palavra-passe incorretos.",
+  "auth/wrong-password": "Email ou palavra-passe incorretos.",
+  "auth/user-not-found": "Não existe conta com este email. Cria uma conta primeiro.",
+  "auth/missing-email": "Escreve um email válido.",
   "auth/weak-password": "Escolhe uma palavra-passe com pelo menos 6 caracteres.",
   "auth/too-many-requests": "Foram feitas demasiadas tentativas. Tenta novamente mais tarde.",
   "auth/network-request-failed": "Não foi possível ligar. Verifica a tua ligação à internet.",
@@ -24,222 +29,226 @@ const friendlyErrors = {
   "auth/quota-exceeded": "O limite de pedidos do Firebase foi atingido. Tenta novamente mais tarde.",
 };
 
+function friendlyError(error) {
+  return friendlyErrors[error?.code] || error?.message || "Não foi possível concluir. Tenta novamente.";
+}
+
 export default function App() {
-  const [mode, setMode] = useState("register");
+  const [authTab, setAuthTab] = useState("register");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState({ text: "", kind: "success" });
   const [busy, setBusy] = useState(false);
   const [user, setUser] = useState(null);
+  const [displayName, setDisplayName] = useState("");
+  const [emailVerified, setEmailVerified] = useState(false);
   const [authReady, setAuthReady] = useState(false);
-  const [services, setServices] = useState([]);
   const [ownServices, setOwnServices] = useState([]);
-  const [profileSaving, setProfileSaving] = useState(false);
-  const [profileEmailSent, setProfileEmailSent] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
+  const [panel, setPanel] = useState(null); // null | "create" | "profile"
   const [resetEmail, setResetEmail] = useState("");
   const [showResetForm, setShowResetForm] = useState(false);
-  const isRegister = mode === "register";
+  const [verificationSent, setVerificationSent] = useState(false);
+
+  const isRegister = authTab === "register";
+
+  function notify(text, kind = "success") {
+    setNotice({ text, kind });
+  }
+
+  async function loadOwnServices(firebaseUser) {
+    if (!firebaseUser) {
+      setOwnServices([]);
+      return;
+    }
+    try {
+      const res = await fetch(`${apiBase}/services?userId=${firebaseUser.uid}`);
+      if (!res.ok) throw new Error("Erro ao carregar serviços");
+      const data = await res.json();
+      setOwnServices(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   useEffect(() => {
-    onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setDisplayName(currentUser?.displayName || "");
+      setEmailVerified(Boolean(currentUser?.emailVerified));
       setAuthReady(true);
-      if (currentUser && authReady) {
-        fetch("/api/services", {
-          credentials: "include",
-        })
-          .then((res) => res.json())
-          .then((data) => setServices(data))
-          .then(() =>
-            fetch("/api/auth/login", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                idToken: currentUser.getIdToken(),
-              }),
-            })
-          )
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.user) setUser(Object.assign({}, data.user, { email: currentUser.email }));
-            return fetch(`/api/services?userId=${currentUser.uid}`, {
-              credentials: "include",
-            });
-          })
-          .then((res) => res.json())
-          .then((data) => setOwnServices(data))
-          .catch((err) => console.error("Erro ao buscar serviços:", err));
-      }
+      loadOwnServices(currentUser);
     });
+    return unsubscribe;
   }, []);
+
+  // Sincroniza o utilizador no MongoDB (rota de login cria se não existir)
+  async function syncUser(firebaseUser) {
+    const idToken = await firebaseUser.getIdToken();
+    await fetch(`${apiBase}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
-    setMessage("");
+    notify("");
     setBusy(true);
     try {
       if (isRegister) {
         const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
         await updateProfile(result.user, { displayName: name.trim() });
-        setUser(result.user);
-        setMessage("Conta criada. Bem-vindo/a ao ServiPerto!");
-
-        await fetch(`${apiBase}/auth/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: result.user.email, password: password, name }),
-        });
-      } else if (showResetForm) {
-        // Modo reset de palavra-passe
-        if (!resetEmail) {
-          setMessage("Por favor, introduz o teu email.");
-          setBusy(false);
-          return;
+        setDisplayName(name.trim());
+        await syncUser(result.user);
+        // Envia email de verificação logo após o registo
+        try {
+          await sendEmailVerification(result.user);
+          notify("Conta criada! Enviámos um email de verificação para " + result.user.email + ".");
+        } catch {
+          notify("Conta criada. Podes enviar o email de verificação nas definições.");
         }
-        await fetch(`${apiBase}/auth/reset-password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: resetEmail }),
-        });
-        setMessage("Email de reset de palavra-passe enviado! Verifica a tua caixa de entrada.");
-        setShowResetForm(false);
-        setResetEmail("");
-        setBusy(false);
       } else {
-        // Login normal
         const result = await signInWithEmailAndPassword(auth, email.trim(), password);
-        setMessage("Sessão iniciada com sucesso.");
-
-        await fetch(`${apiBase}/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken: result.user.getIdToken() }),
-        });
+        await syncUser(result.user);
+        notify("Sessão iniciada com sucesso.");
       }
     } catch (error) {
-      setMessage(
-        friendlyErrors[error.code] ?? "Não foi possível concluir. Tenta novamente."
-      );
+      notify(friendlyError(error), "error");
     } finally {
       setBusy(false);
     }
   }
 
-  function changeMode(nextMode) {
-    setMode(nextMode);
-    setMessage("");
-    // Quando mudamos de modo, esconder o formulário de reset se estivermos a mudar de/register para login
-    if (nextMode !== "reset") {
-      setShowResetForm(false);
-      setResetEmail("");
-    }
+  function changeTab(nextTab) {
+    setAuthTab(nextTab);
+    notify("");
+    setShowResetForm(false);
+    setResetEmail("");
   }
 
   async function handleSignOut() {
     setBusy(true);
     try {
       await signOut(auth);
-      setMessage("Sessão terminada.");
-      setUser(null);
-      setServices([]);
-      setOwnServices([]);
-      setProfileEmailSent(false);
-      setShowProfile(false);
+      notify("Sessão terminada.");
+      setPanel(null);
       setShowResetForm(false);
       setResetEmail("");
-    } catch (e) {
-      setMessage("Não foi possível terminar a sessão. Tenta novamente.");
+      setVerificationSent(false);
+    } catch {
+      notify("Não foi possível terminar a sessão. Tenta novamente.", "error");
     } finally {
       setBusy(false);
     }
   }
 
-  // Função para atualizar perfil
-  async function handleProfileUpdate(event) {
-    event.preventDefault();
-    setProfileSaving(true);
-    try {
-      const { name, email } = event.target;
-      await fetch(`${apiBase}/auth/profile`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.name.value,
-          email: email.email.value,
-        }),
-      });
-      setMessage("Perfil atualizado com sucesso!");
-      // Atualizar estado local do usuário
-      setUser(prev => prev ? { ...prev, name: name.name.value, email: email.email.value } : null);
-      setProfileSaving(false);
-    } catch (error) {
-      console.error("Erro ao atualizar perfil:", error);
-      setMessage("Erro ao atualizar perfil. Tenta novamente.");
-      setProfileSaving(false);
-    }
-  }
-
-  // Função para enviar email de verificação
-  async function handleSendVerification() {
-    setProfileEmailSent(false);
-    try {
-      await fetch(`${apiBase}/auth/send-verification`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      setProfileEmailSent(true);
-      setMessage("Email de verificação enviado! Verifica a tua caixa de entrada.");
-    } catch (error) {
-      console.error("Erro ao enviar verificação:", error);
-      setMessage("Erro ao enviar email de verificação. Tenta novamente.");
-    }
-  }
-
-  // Função para enviar reset de palavra-passe
   async function handleResetSubmit(event) {
     event.preventDefault();
-    if (!resetEmail) {
-      setMessage("Por favor, introduz o teu email.");
-      setBusy(false);
-      return;
-    }
+    notify("");
     setBusy(true);
     try {
-      await fetch(`${apiBase}/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: resetEmail }),
-      });
-      setMessage("Email de reset de palavra-passe enviado! Verifica a tua caixa de entrada.");
+      await sendPasswordResetEmail(auth, resetEmail.trim());
+      notify("Email de reset enviado! Verifica a caixa de entrada e o spam.");
       setShowResetForm(false);
       setResetEmail("");
     } catch (error) {
-      console.error("Erro ao enviar reset de palavra-passe:", error);
-      setMessage("Erro ao enviar reset de palavra-passe. Tenta novamente.");
+      notify(friendlyError(error), "error");
     } finally {
       setBusy(false);
     }
   }
 
-  // Buscar serviços ao montar
-  useEffect(() => {
-    if (authReady && user) {
-      fetch("/api/services")
-        .then((res) => res.json())
-        .then((data) => setServices(data))
-        .then(() =>
-          fetch(`/api/services?userId=${user.uid}`, {
-            credentials: "include",
-          })
-        )
-        .then((res) => res.json())
-        .then((data) => setOwnServices(data))
-        .catch((err) => console.error("Erro:", err));
+  async function handleProfileUpdate(event) {
+    event.preventDefault();
+    notify("");
+    setBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${apiBase}/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: event.target.name.value,
+          email: user.email,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao atualizar perfil");
+
+      const newName = event.target.name.value;
+      await updateProfile(user, { displayName: newName });
+      setDisplayName(newName);
+      notify("Perfil atualizado com sucesso!");
+    } catch (error) {
+      notify(error.message || "Erro ao atualizar perfil.", "error");
+    } finally {
+      setBusy(false);
     }
-  }, [authReady, user]);
+  }
+
+  async function handleSendVerification() {
+    notify("");
+    setBusy(true);
+    try {
+      await sendEmailVerification(auth.currentUser);
+      setVerificationSent(true);
+      notify("Email de verificação enviado! Verifica a caixa de entrada e o spam.");
+    } catch (error) {
+      notify(friendlyError(error), "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleCheckVerification() {
+    setBusy(true);
+    try {
+      await auth.currentUser.reload();
+      const verified = Boolean(auth.currentUser.emailVerified);
+      setEmailVerified(verified);
+      notify(verified ? "Email verificado com sucesso! ✓" : "Ainda não está verificado. Confirma o link no email.", verified ? "success" : "error");
+    } catch (error) {
+      notify("Não foi possível verificar o estado do email.", "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleCreateService(event) {
+    event.preventDefault();
+    notify("");
+    setBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${apiBase}/services`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: event.target.title.value,
+          description: event.target.description.value,
+          location: event.target.location.value,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao criar serviço");
+
+      setOwnServices((prev) => [data, ...prev]);
+      notify("Serviço criado com sucesso!");
+      setPanel(null);
+    } catch (error) {
+      notify(error.message || "Erro ao criar serviço.", "error");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <main className="page-shell">
@@ -265,113 +274,96 @@ export default function App() {
 
         {authReady && user ? (
           <div className="form-panel account-panel">
-            <div className="account-avatar" aria-hidden="true">{(user.displayName || user.email || "S").charAt(0).toUpperCase()}</div>
+            <div className="account-avatar" aria-hidden="true">{(displayName || user.email || "S").charAt(0).toUpperCase()}</div>
             <p className="kicker">Sessão iniciada</p>
-            <h2>Olá, {user.displayName || "bem-vindo/a"}.</h2>
+            <h2>Olá, {displayName || "bem-vindo/a"}.</h2>
             <p className="form-subtitle">A tua conta ServiPerto está pronta.</p>
             <p className="account-email">{user.email}</p>
 
-            {/* Status de email verificado */}
-            {user.emailVerified !== undefined && (
-              <p className="form-message success">
-                {user.emailVerified ? 'Email verificado ✓' : 'Email não verificado'}
-              </p>
-            )}
+            <p className={`form-message ${emailVerified ? "success" : "error"}`}>
+              {emailVerified ? "Email verificado ✓" : "Email não verificado"}
+            </p>
 
-            {message && <p className="form-message error" role="status">{message}</p>}
+            {notice.text && <p className={`form-message ${notice.kind}`} role="status">{notice.text}</p>}
 
             <button className="submit-button" type="button" onClick={handleSignOut} disabled={busy}>
-              {busy ? "A terminando sessão…" : "Terminar sessão"}
+              {busy ? "A terminar sessão…" : "Terminar sessão"}
               <span aria-hidden="true">→</span>
             </button>
 
-            {/* Minhas services section */}
-            {ownServices.length > 0 ? (
+            {ownServices.length > 0 && (
               <div className="services-section">
                 <h3>Os meus serviços</h3>
                 <ul>
                   {ownServices.map((svc) => (
                     <li key={svc._id}>
-                      <strong>{svc.title}</strong>{' '}
+                      <strong>{svc.title}</strong>
                       {svc.description && <span>{svc.description}</span>}
                       {svc.location && <span>{svc.location}</span>}
                     </li>
                   ))}
                 </ul>
               </div>
-            ) : (
-              <p>Nenhum serviço ainda. <a href="#/" onClick={() => setMode("register")}>Criar um serviço</a></p>
             )}
 
-            {/* Ações do utilizador logado */}
-            {!showProfile && mode !== 'create-service' && (
+            {/* Botões de ação - só aparecem quando nenhum painel está aberto */}
+            {panel === null && (
               <>
-                <button className="submit-button" onClick={() => setMode('create-service')} disabled={busy}>
-                  {busy ? "A criar serviço…" : "Criar serviço"}
+                <button className="submit-button" type="button" onClick={() => { setPanel("create"); notify(""); }} disabled={busy}>
+                  Criar serviço
                 </button>
-                <button className="submit-button" onClick={() => setShowProfile(true)} disabled={busy}>
-                  {busy ? "A carregar…" : "Minhas definições"}
+                <button className="submit-button" type="button" onClick={() => { setPanel("profile"); notify(""); }} disabled={busy}>
+                  Minhas definições
                 </button>
               </>
             )}
 
-            {/* Formulário de criar serviço (um único local) */}
-            {mode === 'create-service' && (
+            {/* Painel: criar serviço (um único local) */}
+            {panel === "create" && (
               <div className="settings-section">
                 <h3>Criar novo serviço</h3>
-                <p>Preenche o formulário abaixo para adicionar um novo serviço ao marketplace.</p>
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  fetch(`${apiBase}/services`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      title: e.target.title.value,
-                      description: e.target.description.value,
-                      location: e.target.location.value,
-                    }),
-                  }).then(() => {
-                    alert("Serviço criado!");
-                    setMode('register');
-                  });
-                }}>
+                <form onSubmit={handleCreateService}>
                   <label>Título do serviço<input type="text" name="title" required /></label>
                   <label>Descrição<input type="text" name="description" placeholder="Descreve o serviço" /></label>
                   <label>Localização<input type="text" name="location" placeholder="Ex: Lisboa, Porto" /></label>
-                  <button className="submit-button" type="submit">Guardar serviço</button>
-                  <button className="submit-button" type="button" onClick={() => setMode('register')}>Cancelar</button>
+                  <button className="submit-button" type="submit" disabled={busy}>
+                    {busy ? "A guardar…" : "Guardar serviço"}
+                  </button>
+                  <button className="submit-button" type="button" onClick={() => { setPanel(null); notify(""); }} disabled={busy}>
+                    Cancelar
+                  </button>
                 </form>
               </div>
             )}
 
-            {/* Minhas definições section */}
-            {showProfile && (
+            {/* Painel: definições / perfil */}
+            {panel === "profile" && (
               <div className="settings-section">
                 <h3>Minhas definições</h3>
                 <form onSubmit={handleProfileUpdate}>
-                  <div className="setting-row">
-                    <label>Nome</label>
-                    <input type="text" name="name" defaultValue={user.displayName || user.name || ''} required />
-                  </div>
-                  <div className="setting-row">
-                    <label>Email</label>
-                    <input type="email" name="email" defaultValue={user.email || ''} readOnly />
-                  </div>
-                  {user.emailVerified ? (
-                    <p>Email verificado ✓</p>
+                  <label>Nome<input type="text" name="name" defaultValue={displayName} required /></label>
+                  <label>Email<input type="email" name="email" defaultValue={user.email || ""} readOnly /></label>
+
+                  {emailVerified ? (
+                    <p className="form-message success">Email verificado ✓</p>
                   ) : (
                     <>
                       <button className="submit-button" type="button" onClick={handleSendVerification} disabled={busy}>
                         {busy ? "A enviar…" : "Enviar email de verificação"}
                       </button>
-                      <p>{profileEmailSent ? 'Email enviado!' : ''}</p>
+                      {verificationSent && (
+                        <button className="submit-button" type="button" onClick={handleCheckVerification} disabled={busy}>
+                          Já confirmei o email
+                        </button>
+                      )}
                     </>
                   )}
+
                   <button className="submit-button" type="submit" disabled={busy}>
                     {busy ? "A salvar…" : "Guardar alterações"}
                   </button>
-                  <button className="submit-button" type="button" onClick={() => setShowProfile(false)} disabled={busy}>
-                    Cancelar
+                  <button className="submit-button" type="button" onClick={() => { setPanel(null); notify(""); }} disabled={busy}>
+                    Voltar
                   </button>
                 </form>
               </div>
@@ -389,41 +381,42 @@ export default function App() {
             </div>
 
             <div className="mode-switch" role="tablist" aria-label="Tipo de acesso">
-              <button type="button" role="tab" aria-selected={isRegister} className={isRegister ? "selected" : ""} onClick={() => changeMode("register")}>Criar conta</button>
-              <button type="button" role="tab" aria-selected={!isRegister} className={!isRegister ? "selected" : ""} onClick={() => changeMode("login")}>Iniciar sessão</button>
+              <button type="button" role="tab" aria-selected={isRegister} className={isRegister ? "selected" : ""} onClick={() => changeTab("register")}>Criar conta</button>
+              <button type="button" role="tab" aria-selected={!isRegister} className={!isRegister ? "selected" : ""} onClick={() => changeTab("login")}>Iniciar sessão</button>
             </div>
 
             <form onSubmit={handleSubmit}>
               {isRegister && <label>Como te chamas?<input autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="O teu nome" required /></label>}
               <label>Email<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="ola@exemplo.pt" required /></label>
               <label>Palavra-passe<input type="password" autoComplete={isRegister ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Pelo menos 6 caracteres" minLength={6} required /></label>
-              {message && <p className={`form-message ${message.startsWith("Não") || message.startsWith("Este") || message.startsWith("O email") || message.startsWith("Escolhe") || message.startsWith("Foram") ? "error" : "success"}`} role="status">{message}</p>}
+              {notice.text && <p className={`form-message ${notice.kind}`} role="status">{notice.text}</p>}
               <button className="submit-button" type="submit" disabled={busy}>
                 {busy ? "A processar…" : isRegister ? "Criar a minha conta" : "Entrar na minha conta"}
                 <span aria-hidden="true">→</span>
               </button>
             </form>
 
-            {/* Link "Esqueci a palavra-passe" */}
-            {isRegister ? null : (
+            {!isRegister && !showResetForm && (
               <p>
-                <a onClick={() => setShowResetForm(true)} style={{cursor: 'pointer', textDecoration: 'underline'}}>
+                <a onClick={() => { setShowResetForm(true); notify(""); }} style={{ cursor: "pointer", textDecoration: "underline" }}>
                   Esqueci a minha palavra-passe
                 </a>
               </p>
             )}
 
-            {/* Formulário de reset de palavra-passe */}
             {showResetForm && (
-              <div className="form-panel">
+              <div className="reset-section">
                 <h3>Reset de palavra-passe</h3>
-                <p>Introduz o teu endereço de email para receber um link de reset.</p>
+                <p>Introduz o email da tua conta para receber um link de reset.</p>
                 <form onSubmit={handleResetSubmit}>
                   <label>Email<input type="email" value={resetEmail} onChange={(event) => setResetEmail(event.target.value)} placeholder="ola@exemplo.pt" required /></label>
-                  <button type="submit" disabled={busy}>{busy ? "A enviar…" : "Enviar link de reset"}</button>
+                  <button className="submit-button" type="submit" disabled={busy}>
+                    {busy ? "A enviar…" : "Enviar link de reset"}
+                  </button>
+                  <button className="submit-button" type="button" onClick={() => { setShowResetForm(false); notify(""); }} disabled={busy}>
+                    Cancelar
+                  </button>
                 </form>
-                {message && <p className="form-message success" role="status">{message}</p>}
-                <button type="button" onClick={() => setShowResetForm(false)}>Cancelar</button>
               </div>
             )}
 

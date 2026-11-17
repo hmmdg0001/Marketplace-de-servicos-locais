@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { verifyIdToken } = require('../config/firebase');
+const { requireAuth } = require('../config/firebase');
 const User = require('../models/user');
 
-// PUT /api/auth/profile - Editar perfil do utilizador
-router.put('/', verifyIdToken, async (req, res) => {
+// PUT /api/profile - Editar perfil do utilizador
+router.put('/', requireAuth, async (req, res) => {
   try {
     const { name, email } = req.body;
     const uid = req.user.uid;

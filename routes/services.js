@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { verifyIdToken } = require('../config/firebase');
+const { requireAuth } = require('../config/firebase');
 const Service = require('../models/service');
 
-// GET /api/services - Listar todos os serviços
+// GET /api/services - Listar serviços (opcionalmente filtrar por ?userId=)
 router.get('/', async (req, res) => {
   try {
-    const services = await Service.find().sort({ createdAt: -1 });
+    const filter = {};
+    if (req.query.userId) filter.userId = req.query.userId;
+
+    const services = await Service.find(filter).sort({ createdAt: -1 });
     res.json(services);
   } catch (error) {
     console.error('Erro ao listar serviços:', error.message);
@@ -15,10 +18,10 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/services - Criar novo serviço (protegido)
-router.post('/', verifyIdToken, async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const { title, description, location } = req.body;
-    const userId = req.user.uid; // do verifyIdToken middleware
+    const userId = req.user.uid;
 
     if (!title) return res.status(400).json({ error: 'Título obrigatório' });
 
