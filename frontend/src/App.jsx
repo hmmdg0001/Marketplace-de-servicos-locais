@@ -299,9 +299,9 @@ export default function App() {
 
             {/* Botão para criar serviço */}
             {ownServices.length === 0 && !showProfile && (
-              <button className="submit-button" onClick={() => setMode('create-service') disabled={busy}>
-                {busy ? "A criar serviço…" : "Criar serviço"}
-              </button>
+              <button className="submit-button" onClick={() => setMode('create-service')} disabled={busy}>
+                 {busy ? "A criar serviço…" : "Criar serviço"}
+               </button>
             )}
           </div>
         ) : (
