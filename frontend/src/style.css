@@ -202,3 +202,5 @@ form textarea:focus{border-color:#81916b;outline:0;box-shadow:0 0 0 3px #8392691
 .form-label{display:block;font-size:11px;font-weight:600;color:#5d6b3f;margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em}
 .account-column .column-count{font-size:10px;color:#8a9086;font-weight:400;margin-left:6px}
 .account-list{max-height:320px;overflow-y:auto;padding-right:4px}
+.account-quick-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.account-quick-links .submit-button{flex:1;min-width:160px}

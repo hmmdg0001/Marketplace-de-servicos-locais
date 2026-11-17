@@ -505,14 +505,32 @@ export default function AccountPage() {
   return (
       <section className="auth-layout" id="inicio">
         <div className="intro-panel">
-          <div className="eyebrow"><span className="eyebrow-dot" /> A comunidade começa aqui</div>
-          <h1>Há sempre alguém <em>por perto</em> que sabe como ajudar.</h1>
-          <p className="intro-copy">Encontra profissionais de confiança na tua zona ou dá a conhecer o teu talento à comunidade.</p>
-          <div className="neighbourhood-card">
-            <div className="avatar-stack" aria-hidden="true"><span>m</span><span>j</span><span>r</span><span>+</span></div>
-            <p><strong>Talento local, confiança real.</strong><br />Pequenos serviços. Grandes ligações.</p>
-          </div>
-          <div className="decor decor-one" /><div className="decor decor-two" />
+          {authReady && user ? (
+            <>
+              <div className="eyebrow"><span className="eyebrow-dot" /> A minha conta</div>
+              <h1>Olá, <em>{displayName || "bem-vindo/a"}</em>.</h1>
+              <p className="intro-copy">Gere os teus serviços e pedidos a partir daqui.</p>
+              <div className="account-quick-links">
+                <button className="submit-button" type="button" onClick={() => document.getElementById("meus-servicos")?.scrollIntoView({ behavior: "smooth" })}>
+                  Os meus serviços
+                </button>
+                <button className="submit-button" type="button" onClick={() => document.getElementById("servicos-pedidos")?.scrollIntoView({ behavior: "smooth" })}>
+                  Serviços que pedi
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="eyebrow"><span className="eyebrow-dot" /> A comunidade começa aqui</div>
+              <h1>Há sempre alguém <em>por perto</em> que sabe como ajudar.</h1>
+              <p className="intro-copy">Encontra profissionais de confiança na tua zona ou dá a conhecer o teu talento à comunidade.</p>
+              <div className="neighbourhood-card">
+                <div className="avatar-stack" aria-hidden="true"><span>m</span><span>j</span><span>r</span><span>+</span></div>
+                <p><strong>Talento local, confiança real.</strong><br />Pequenos serviços. Grandes ligações.</p>
+              </div>
+              <div className="decor decor-one" /><div className="decor decor-two" />
+            </>
+          )}
         </div>
 
         {authReady && user ? (
@@ -560,7 +578,7 @@ export default function AccountPage() {
             </button>
 
             {panel === null && (ownServices.length > 0 || ownOrders.length > 0) && (
-              <div className="services-section">
+              <div className="services-section" id="meus-servicos">
                 {ownServices.length > 0 && (
                   <>
                     <h3>Os meus serviços <span className="column-count">{ownServices.length}</span></h3>
@@ -590,7 +608,7 @@ export default function AccountPage() {
                 )}
 
                 {ownOrders.length > 0 && (
-                  <>
+                  <div id="servicos-pedidos">
                     <h3>Serviços que já pedi <span className="column-count">{ownOrders.length}</span></h3>
                     <ul className="service-list">
                       {ownOrders.map((pedido) => (
@@ -605,7 +623,7 @@ export default function AccountPage() {
                         </li>
                       ))}
                     </ul>
-                  </>
+                  </div>
                 )}
               </div>
             )}
