@@ -541,8 +541,6 @@ export default function AccountPage() {
                 {profile.provider.totalAvaliacoes > 0
                   ? `${profile.provider.mediaAvaliacoes.toFixed(1)}/5 em ${profile.provider.totalAvaliacoes} avaliação(ões)`
                   : "Ainda sem avaliações"}
-                <span aria-hidden="true"> · </span>
-                {profile.provider.totalServicos} serviço(s) publicado(s)
               </p>
             )}
 
@@ -557,11 +555,7 @@ export default function AccountPage() {
               <span aria-hidden="true">→</span>
             </button>
 
-            {panel === null && ownServices.length > 0 && (
-              <p className="field-hint" style={{ marginTop: 16, textAlign: "center" }}>
-                {ownServices.length} serviço(s) publicado(s).
-              </p>
-            )}
+            
 
             {/* Botões de ação - só aparecem quando nenhum painel está aberto */}
             {panel === null && (
