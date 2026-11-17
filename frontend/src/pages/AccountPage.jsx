@@ -68,6 +68,7 @@ export default function AccountPage() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [ownServices, setOwnServices] = useState([]);
+  const [ownOrders, setOwnOrders] = useState([]);
   const [categories, setCategories] = useState([]);
   const [role, setRole] = useState("user");
   const [profile, setProfile] = useState(null); // { user, provider }
@@ -127,6 +128,24 @@ export default function AccountPage() {
     }
   }
 
+  async function loadOwnOrders(firebaseUser) {
+    if (!firebaseUser) {
+      setOwnOrders([]);
+      return;
+    }
+    try {
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch(`${apiBase}/orders`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao carregar pedidos"));
+      setOwnOrders(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -134,6 +153,7 @@ export default function AccountPage() {
       setEmailVerified(Boolean(currentUser?.emailVerified));
       setAuthReady(true);
       loadOwnServices(currentUser);
+      loadOwnOrders(currentUser);
       if (currentUser) {
         // Só carrega o perfil depois de garantir que o utilizador existe no Mongo.
         syncUser(currentUser, currentUser.displayName || "").then(() => loadProfile(currentUser));
@@ -448,38 +468,64 @@ export default function AccountPage() {
               <span aria-hidden="true">→</span>
             </button>
 
-            {ownServices.length > 0 && (
-              <div className="services-section">
-                <h3>Os meus serviços</h3>
-                <ul className="service-list">
-                  {ownServices.map((svc) => (
-                    <li key={svc._id} className="service-item">
-                      <div>
-                        <strong>{svc.titulo || svc.title}</strong>
-                        {(svc.descricao || svc.description) && <span>{svc.descricao || svc.description}</span>}
-                        {(svc.zona || svc.location) && <span>📍 {svc.zona || svc.location}</span>}
-                        {(svc.preco > 0 || svc.price > 0) && (
-                          <span>Desde {Number(svc.preco || svc.price).toFixed(2).replace(".", ",")} €</span>
-                        )}
-                      </div>
-                      <button
-                        className="danger-button"
-                        type="button"
-                        onClick={() => handleDeleteService(svc)}
-                        disabled={busy}
-                      >
-                        Apagar
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+            {panel === null && (ownServices.length > 0 || ownOrders.length > 0) && (
+              <div className="account-grid">
+                <div className="account-column">
+                  <h3>Os meus pedidos</h3>
+                  {ownOrders.length === 0 ? (
+                    <p className="catalog-empty">Ainda não tens pedidos.</p>
+                  ) : (
+                    <ul className="service-list">
+                      {ownOrders.map((pedido) => (
+                        <li key={pedido._id} className="service-item order-item">
+                          <div>
+                            <strong>{pedido.servico?.titulo || "Serviço"}</strong>
+                            <span>{pedido.estado}</span>
+                            <span>📍 {pedido.servico?.zona}</span>
+                            <span>Data: {new Date(pedido.dataDesejada).toLocaleDateString("pt-PT")}</span>
+                          </div>
+                          <a className="card-link" href={`/pedidos/${pedido._id}`}>Ver</a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="account-column">
+                  <h3>Os meus serviços</h3>
+                  {ownServices.length === 0 ? (
+                    <p className="catalog-empty">Ainda não publicaste serviços.</p>
+                  ) : (
+                    <ul className="service-list">
+                      {ownServices.map((svc) => (
+                        <li key={svc._id} className="service-item">
+                          <div>
+                            <strong>{svc.titulo || svc.title}</strong>
+                            {(svc.descricao || svc.description) && <span>{svc.descricao || svc.description}</span>}
+                            {(svc.zona || svc.location) && <span>📍 {svc.zona || svc.location}</span>}
+                            {(svc.preco > 0 || svc.price > 0) && (
+                              <span>Desde {Number(svc.preco || svc.price).toFixed(2).replace(".", ",")} €</span>
+                            )}
+                          </div>
+                          <button
+                            className="danger-button"
+                            type="button"
+                            onClick={() => handleDeleteService(svc)}
+                            disabled={busy}
+                          >
+                            Apagar
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Botões de ação - só aparecem quando nenhum painel está aberto */}
             {panel === null && (
               <>
-                <Link className="submit-button" to="/pedidos">Os meus pedidos</Link>
+                <Link className="submit-button" to="/pedidos">Ver todos os pedidos</Link>
                 <button className="submit-button" type="button" onClick={() => { setPanel("create"); notify(""); }} disabled={busy}>
                   Criar serviço
                 </button>

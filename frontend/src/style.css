@@ -173,3 +173,12 @@ form textarea:focus{border-color:#81916b;outline:0;box-shadow:0 0 0 3px #8392691
 .my-review h3,.review-form h3{font:700 14px Manrope,sans-serif;color:#293a2e;margin:0 0 10px}
 .my-review p{font-size:11px;line-height:1.6;color:#5c675c;margin:0 0 6px}
 @media(max-width:680px){.review-list{grid-template-columns:1fr}}
+/* Conta - grelha de pedidos e serviços */
+.account-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
+.account-column{background:#fffefa;border:1px solid #e7e8e1;border-radius:8px;padding:18px}
+.account-column h3{font:700 15px Manrope,sans-serif;color:#293a2e;margin:0 0 14px}
+.order-item{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.order-item div{display:flex;flex-direction:column;gap:3px}
+.order-item span{font-size:11px;color:#6b756a}
+.order-item strong{font-size:13px;color:#2f4436}
+@media(max-width:760px){.account-grid{grid-template-columns:1fr}}
