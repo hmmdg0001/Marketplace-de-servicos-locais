@@ -38,6 +38,8 @@ export default function App() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileEmailSent, setProfileEmailSent] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [showResetForm, setShowResetForm] = useState(false);
   const isRegister = mode === "register";
 
   useEffect(() => {
@@ -89,7 +91,24 @@ export default function App() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: result.user.email, password: password, name }),
         });
+      } else if (showResetForm) {
+        // Modo reset de palavra-passe
+        if (!resetEmail) {
+          setMessage("Por favor, introduz o teu email.");
+          setBusy(false);
+          return;
+        }
+        await fetch(`${apiBase}/auth/reset-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: resetEmail }),
+        });
+        setMessage("Email de reset de palavra-passe enviado! Verifica a tua caixa de entrada.");
+        setShowResetForm(false);
+        setResetEmail("");
+        setBusy(false);
       } else {
+        // Login normal
         const result = await signInWithEmailAndPassword(auth, email.trim(), password);
         setMessage("Sessão iniciada com sucesso.");
 
@@ -111,6 +130,11 @@ export default function App() {
   function changeMode(nextMode) {
     setMode(nextMode);
     setMessage("");
+    // Quando mudamos de modo, esconder o formulário de reset se estivermos a mudar de/register para login
+    if (nextMode !== "reset") {
+      setShowResetForm(false);
+      setResetEmail("");
+    }
   }
 
   async function handleSignOut() {
@@ -123,29 +147,14 @@ export default function App() {
       setOwnServices([]);
       setProfileEmailSent(false);
       setShowProfile(false);
+      setShowResetForm(false);
+      setResetEmail("");
     } catch (e) {
       setMessage("Não foi possível terminar a sessão. Tenta novamente.");
     } finally {
       setBusy(false);
     }
   }
-
-  // Buscar serviços ao montar
-  useEffect(() => {
-    if (authReady && user) {
-      fetch("/api/services")
-        .then((res) => res.json())
-        .then((data) => setServices(data))
-        .then(() =>
-          fetch(`/api/services?userId=${user.uid}`, {
-            credentials: "include",
-          })
-        )
-        .then((res) => res.json())
-        .then((data) => setOwnServices(data))
-        .catch((err) => console.error("Erro:", err));
-    }
-  }, [authReady, user]);
 
   // Função para atualizar perfil
   async function handleProfileUpdate(event) {
@@ -189,6 +198,49 @@ export default function App() {
     }
   }
 
+  // Função para enviar reset de palavra-passe
+  async function handleResetSubmit(event) {
+    event.preventDefault();
+    if (!resetEmail) {
+      setMessage("Por favor, introduz o teu email.");
+      setBusy(false);
+      return;
+    }
+    setBusy(true);
+    try {
+      await fetch(`${apiBase}/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resetEmail }),
+      });
+      setMessage("Email de reset de palavra-passe enviado! Verifica a tua caixa de entrada.");
+      setShowResetForm(false);
+      setResetEmail("");
+    } catch (error) {
+      console.error("Erro ao enviar reset de palavra-passe:", error);
+      setMessage("Erro ao enviar reset de palavra-passe. Tenta novamente.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Buscar serviços ao montar
+  useEffect(() => {
+    if (authReady && user) {
+      fetch("/api/services")
+        .then((res) => res.json())
+        .then((data) => setServices(data))
+        .then(() =>
+          fetch(`/api/services?userId=${user.uid}`, {
+            credentials: "include",
+          })
+        )
+        .then((res) => res.json())
+        .then((data) => setOwnServices(data))
+        .catch((err) => console.error("Erro:", err));
+    }
+  }, [authReady, user]);
+
   return (
     <main className="page-shell">
       <header className="topbar">
@@ -229,7 +281,7 @@ export default function App() {
             {message && <p className="form-message error" role="status">{message}</p>}
 
             <button className="submit-button" type="button" onClick={handleSignOut} disabled={busy}>
-              {busy ? "A terminar sessão…" : "Terminar sessão"}
+              {busy ? "A terminando sessão…" : "Terminar sessão"}
               <span aria-hidden="true">→</span>
             </button>
 
@@ -330,6 +382,30 @@ export default function App() {
                 <span aria-hidden="true">→</span>
               </button>
             </form>
+
+            {/* Link "Esqueci a palavra-passe" */}
+            {isRegister ? null : (
+              <p>
+                <a onClick={() => setShowResetForm(true)} style={{cursor: 'pointer', textDecoration: 'underline'}}>
+                  Esqueci a minha palavra-passe
+                </a>
+              </p>
+            )}
+
+            {/* Formulário de reset de palavra-passe */}
+            {showResetForm && (
+              <div className="form-panel">
+                <h3>Reset de palavra-passe</h3>
+                <p>Introduz o teu endereço de email para receber um link de reset.</p>
+                <form onSubmit={handleResetSubmit}>
+                  <label>Email<input type="email" value={resetEmail} onChange={(event) => setResetEmail(event.target.value)} placeholder="ola@exemplo.pt" required /></label>
+                  <button type="submit" disabled={busy}>{busy ? "A enviar…" : "Enviar link de reset"}</button>
+                </form>
+                {message && <p className="form-message success" role="status">{message}</p>}
+                <button type="button" onClick={() => setShowResetForm(false)}>Cancelar</button>
+              </div>
+            )}
+
             <p className="terms">Ao continuar, aceitas os nossos <a href="#termos">Termos de utilização</a> e a <a href="#privacidade">Política de privacidade</a>.</p>
           </div>
         )}

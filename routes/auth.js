@@ -76,4 +76,23 @@ router.post('/send-verification', verifyIdToken, async (req, res) => {
   }
 });
 
+// POST /api/auth/reset-password - Enviar email de reset de palavra-passe
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email obrigatório' });
+
+    const admin = require('../config/firebase').admin;
+    await admin.auth().sendPasswordResetEmail(email);
+
+    res.json({
+      message: 'Email de reset de palavra-passe enviado. Verifica a tua caixa de entrada.',
+    });
+  } catch (error) {
+    console.error('Erro ao enviar reset de palavra-passe:', error.message);
+    // Firebase retorna erro se o email não existir, mas respondemos sucesso por segurança
+    res.status(500).json({ error: error.message || 'Erro ao enviar reset de palavra-passe' });
+  }
+});
+
 module.exports = router;
