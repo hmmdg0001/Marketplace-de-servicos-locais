@@ -10,21 +10,24 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-connectDB();
-initializeFirebase();
+(async () => {
+  await connectDB();
+  initializeFirebase();
 
-// Rotas da API
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/profile', require('./routes/profile'));
-app.use('/api/categories', require('./routes/categories'));
-app.use('/api/services', require('./routes/services'));
-app.use('/api/orders', require('./routes/orders'));
+  // Rotas da API
+  app.use('/api/auth', require('./routes/auth'));
+  app.use('/api/profile', require('./routes/profile'));
+  app.use('/api/categories', require('./routes/categories'));
+  app.use('/api/services', require('./routes/services'));
+  app.use('/api/orders', require('./routes/orders'));
+  app.use('/api/upload', require('./routes/upload'));
 
-// Rota raiz
-app.get('/', (req, res) => {
-  res.json({ message: 'Marketplace de Serviços Locais API' });
-});
+  // Rota raiz
+  app.get('/', (req, res) => {
+    res.json({ message: 'Marketplace de Serviços Locais API' });
+  });
 
-app.listen(PORT, () => {
-  console.log(`Servidor a correr na porta ${PORT}`);
-});
+  app.listen(PORT, () => {
+    console.log(`Servidor a correr na porta ${PORT}`);
+  });
+})();

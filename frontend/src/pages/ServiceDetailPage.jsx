@@ -125,7 +125,20 @@ export default function ServiceDetailPage() {
 
       <div className="service-detail">
         <div className="service-detail-gallery" aria-label="Fotografias do serviço">
-          <span>Fotografias do serviço</span>
+          {service.imagens && service.imagens.length > 0 ? (
+            <div className="gallery">
+              <img src={service.imagens[0]} alt={service.titulo} className="gallery-main" />
+              {service.imagens.length > 1 && (
+                <div className="gallery-thumbs">
+                  {service.imagens.slice(1).map((img, i) => (
+                    <img key={i} src={img} alt={`${service.titulo} ${i + 2}`} className="gallery-thumb" />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="gallery-placeholder">Sem fotografias</div>
+          )}
         </div>
 
         <div className="service-detail-info">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   createUserWithEmailAndPassword,
@@ -13,6 +13,7 @@ import { auth } from "../firebase.js";
 import { PORTUGAL_CITIES } from "../data/cities.js";
 
 const apiBase = "/api";
+const CLOUDINARY_UPLOAD_URL = (cloudName) => `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
 
 const friendlyErrors = {
   "auth/email-already-in-use": "Este email já tem uma conta. Tenta iniciar sessão.",
@@ -77,6 +78,10 @@ export default function AccountPage() {
   const [resetEmail, setResetEmail] = useState("");
   const [showResetForm, setShowResetForm] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
+  const [cloudinaryConfig, setCloudinaryConfig] = useState(null);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [serviceImages, setServiceImages] = useState([]);
+  const fileInputRef = useRef(null);
 
   const isRegister = authTab === "register";
 
@@ -113,21 +118,6 @@ export default function AccountPage() {
     }
   }
 
-  async function loadOwnServices(firebaseUser) {
-    if (!firebaseUser) {
-      setOwnServices([]);
-      return;
-    }
-    try {
-      const res = await fetch(`${apiBase}/services?userId=${firebaseUser.uid}`);
-      const data = await readJson(res);
-      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao carregar serviços"));
-      setOwnServices(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
   async function loadOwnOrders(firebaseUser) {
     if (!firebaseUser) {
       setOwnOrders([]);
@@ -146,13 +136,74 @@ export default function AccountPage() {
     }
   }
 
+  async function fetchCloudinaryConfig() {
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${apiBase}/upload/assinatura`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ pasta: "servicos" }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao obter configuração de upload"));
+      setCloudinaryConfig(data);
+    } catch (err) {
+      console.error("Erro ao obter config Cloudinary:", err);
+    }
+  }
+
+  async function uploadImagesToCloudinary(files) {
+    if (!cloudinaryConfig || files.length === 0) return [];
+    setUploadingImages(true);
+    const urls = [];
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("api_key", cloudinaryConfig.apiKey);
+        formData.append("timestamp", cloudinaryConfig.timestamp.toString());
+        formData.append("signature", cloudinaryConfig.signature);
+        formData.append("folder", cloudinaryConfig.folder);
+        formData.append("resource_type", "image");
+
+        const res = await fetch(CLOUDINARY_UPLOAD_URL(cloudinaryConfig.cloudName), {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error?.message || "Erro no upload");
+        urls.push(data.secure_url);
+      }
+      return urls;
+    } catch (err) {
+      notify(err.message || "Erro ao enviar imagens.", "error");
+      return [];
+    } finally {
+      setUploadingImages(false);
+    }
+  }
+
+  function handleFileSelect(event) {
+    const files = Array.from(event.target.files).slice(0, 6);
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setServiceImages(previews);
+  }
+
+  function removeServiceImage(index) {
+    setServiceImages((prev) => prev.filter((_, i) => i !== index));
+    // Limpar o input para permitir selecionar o mesmo ficheiro outra vez
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setDisplayName(currentUser?.displayName || "");
       setEmailVerified(Boolean(currentUser?.emailVerified));
       setAuthReady(true);
-      loadOwnServices(currentUser);
       loadOwnOrders(currentUser);
       if (currentUser) {
         // Só carrega o perfil depois de garantir que o utilizador existe no Mongo.
@@ -359,6 +410,18 @@ export default function AccountPage() {
     notify("");
     setBusy(true);
     try {
+      // 1) Upload das imagens para o Cloudinary
+      const imageFiles = [];
+      if (fileInputRef.current?.files) {
+        for (const file of fileInputRef.current.files) imageFiles.push(file);
+      }
+      const imageUrls = await uploadImagesToCloudinary(imageFiles);
+      if (imageFiles.length > 0 && imageUrls.length === 0) {
+        setBusy(false);
+        return;
+      }
+
+      // 2) Criar o serviço com as URLs das imagens
       const token = await user.getIdToken();
       const res = await fetch(`${apiBase}/services`, {
         method: "POST",
@@ -372,6 +435,7 @@ export default function AccountPage() {
           categoriaId: event.target.categoria.value,
           preco: Number(event.target.preco.value || 0),
           zona: event.target.location.value,
+          imagens: imageUrls,
         }),
       });
       const data = await readJson(res);
@@ -380,6 +444,8 @@ export default function AccountPage() {
       setOwnServices((prev) => [data, ...prev]);
       notify("Serviço criado com sucesso!");
       setPanel(null);
+      setServiceImages([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       notify(error.message || "Erro ao criar serviço.", "error");
     } finally {
@@ -410,6 +476,32 @@ export default function AccountPage() {
       setBusy(false);
     }
   }
+
+  useEffect(() => {
+    if (panel === "create" && user && !cloudinaryConfig) {
+      fetchCloudinaryConfig();
+    }
+  }, [panel, user, cloudinaryConfig]);
+
+  useEffect(() => {
+    if (!user) {
+      setOwnServices([]);
+      return;
+    }
+    const uid = user.uid;
+    // Pequeno atraso para garantir que o backend está pronto a responder.
+    const timer = setTimeout(() => {
+      fetch("/api/services?userId=" + uid)
+        .then((res) => res.json())
+        .then((data) => {
+          setOwnServices(Array.isArray(data) ? data : []);
+        })
+        .catch((err) => {
+          console.error("Erro ao carregar serviços:", err);
+        });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [user]);
 
   return (
       <section className="auth-layout" id="inicio">
@@ -468,14 +560,14 @@ export default function AccountPage() {
               <span aria-hidden="true">→</span>
             </button>
 
-            {panel === null && (ownServices.length > 0 || ownOrders.length > 0) && (
+            {panel === null && (
               <div className="account-grid">
                 <div className="account-column">
-                  <h3>Os meus pedidos</h3>
+                  <h3>Os meus pedidos <span className="column-count">{ownOrders.length}</span></h3>
                   {ownOrders.length === 0 ? (
                     <p className="catalog-empty">Ainda não tens pedidos.</p>
                   ) : (
-                    <ul className="service-list">
+                    <ul className="service-list account-list">
                       {ownOrders.map((pedido) => (
                         <li key={pedido._id} className="service-item order-item">
                           <div>
@@ -491,11 +583,11 @@ export default function AccountPage() {
                   )}
                 </div>
                 <div className="account-column">
-                  <h3>Os meus serviços</h3>
+                  <h3>Os meus serviços <span className="column-count">{ownServices.length}</span></h3>
                   {ownServices.length === 0 ? (
                     <p className="catalog-empty">Ainda não publicaste serviços.</p>
                   ) : (
-                    <ul className="service-list">
+                    <ul className="service-list account-list">
                       {ownServices.map((svc) => (
                         <li key={svc._id} className="service-item">
                           <div>
@@ -540,6 +632,35 @@ export default function AccountPage() {
               <div className="settings-section">
                 <h3>Criar novo serviço</h3>
                 <form onSubmit={handleCreateService}>
+                  <div className="form-group">
+                    <span className="form-label">Fotografias (máx. 6)</span>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept="image/*"
+                      multiple
+                      onChange={handleFileSelect}
+                      style={{ display: "none" }}
+                    />
+                    <button
+                      type="button"
+                      className="submit-button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={busy || uploadingImages || serviceImages.length >= 6}
+                    >
+                      {serviceImages.length > 0 ? `Adicionar mais (${serviceImages.length}/6)` : "Adicionar fotografias"}
+                    </button>
+                    {serviceImages.length > 0 && (
+                      <div className="image-previews">
+                        {serviceImages.map((preview, i) => (
+                          <div key={i} className="image-preview">
+                            <img src={preview} alt={`Pré-visualização ${i + 1}`} />
+                            <button type="button" onClick={() => removeServiceImage(i)} aria-label="Remover">×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <label>Título do serviço<input type="text" name="title" required /></label>
                   <label>Descrição<input type="text" name="description" placeholder="Descreve o serviço" /></label>
                   <label>
