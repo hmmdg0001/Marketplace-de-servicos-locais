@@ -205,5 +205,5 @@ form textarea:focus{border-color:#81916b;outline:0;box-shadow:0 0 0 3px #8392691
 .account-quick-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 .account-quick-links .submit-button{flex:1;min-width:160px}
 .intro-panel-account{align-items:center;text-align:center}
-.account-quick-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
-.account-quick-links .submit-button{min-width:160px;max-width:220px;margin:0 auto}
+.account-quick-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center;width:100%}
+.account-quick-links .submit-button{width:150px}
