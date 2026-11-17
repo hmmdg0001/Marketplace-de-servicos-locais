@@ -6,6 +6,7 @@ const { requireAdminOrOwner } = require('../middleware/roles');
 const Service = require('../models/service');
 const Category = require('../models/category');
 const ProviderProfile = require('../models/providerProfile');
+const Review = require('../models/review');
 const User = require('../models/user');
 
 const MAX_LIMIT = 48;
@@ -163,6 +164,43 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error('Erro ao buscar serviço:', error.message);
     res.status(500).json({ error: 'Erro ao buscar serviço' });
+  }
+});
+
+// GET /api/services/:id/avaliacoes - Avaliações verificadas do serviço.
+router.get('/:id/avaliacoes', async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+
+    const servico = await Service.findById(req.params.id).select('_id').lean();
+    if (!servico) return res.status(404).json({ error: 'Serviço não encontrado' });
+
+    const avaliacoes = await Review.find({ servicoId: servico._id })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+
+    const clienteIds = [...new Set(avaliacoes.map((a) => a.clienteId))];
+    const clientes = await User.find({ uid: { $in: clienteIds } }).select('uid name').lean();
+    const nomePorUid = new Map(clientes.map((u) => [u.uid, u.name]));
+
+    res.json(
+      avaliacoes.map((avaliacao) => ({
+        _id: avaliacao._id,
+        classificacao: avaliacao.classificacao,
+        comentario: avaliacao.comentario,
+        createdAt: avaliacao.createdAt,
+        cliente: {
+          uid: avaliacao.clienteId,
+          nome: nomePorUid.get(avaliacao.clienteId) || 'Cliente',
+        },
+      }))
+    );
+  } catch (error) {
+    console.error('Erro ao listar avaliações:', error.message);
+    res.status(500).json({ error: 'Erro ao buscar avaliações' });
   }
 });
 

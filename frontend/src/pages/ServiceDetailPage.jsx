@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase.js";
-import { apiBase, readJson, apiErrorMessage, formatPrice } from "../lib/api.js";
+import { apiBase, readJson, apiErrorMessage, formatPrice, formatDate } from "../lib/api.js";
 
 function hoje() {
   return new Date().toISOString().slice(0, 10);
@@ -12,6 +12,7 @@ export default function ServiceDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [service, setService] = useState(null);
+  const [avaliacoes, setAvaliacoes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -47,6 +48,21 @@ export default function ServiceDetailPage() {
       .finally(() => {
         if (!cancelado) setLoading(false);
       });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    let cancelado = false;
+
+    fetch(`${apiBase}/services/${id}/avaliacoes`)
+      .then(readJson)
+      .then((data) => {
+        if (!cancelado && Array.isArray(data)) setAvaliacoes(data);
+      })
+      .catch((err) => console.error("Erro ao carregar avaliações:", err));
 
     return () => {
       cancelado = true;
@@ -200,6 +216,38 @@ export default function ServiceDetailPage() {
           </p>
         </div>
       )}
+
+      <div className="reviews-section">
+        <div className="reviews-head">
+          <h2>Avaliações</h2>
+          <span>
+            {totalAvaliacoes > 0
+              ? `${media.toFixed(1)}/5 · ${totalAvaliacoes} avaliação(ões) verificada(s)`
+              : "Ainda sem avaliações"}
+          </span>
+        </div>
+
+        {avaliacoes.length === 0 ? (
+          <p className="field-hint">As avaliações aparecem aqui depois de um pedido ser concluído.</p>
+        ) : (
+          <ul className="review-list">
+            {avaliacoes.map((avaliacao) => (
+              <li key={avaliacao._id} className="review-item">
+                <div className="review-top">
+                  <strong>{avaliacao.cliente?.nome}</strong>
+                  <span className="verified-badge">Avaliação verificada</span>
+                </div>
+                <p className="review-stars" aria-label={`${avaliacao.classificacao} de 5`}>
+                  {"★".repeat(avaliacao.classificacao)}
+                  <span className="review-stars-empty">{"★".repeat(5 - avaliacao.classificacao)}</span>
+                </p>
+                {avaliacao.comentario && <p className="review-comment">{avaliacao.comentario}</p>}
+                <small className="review-date">{formatDate(avaliacao.createdAt)}</small>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </section>
   );
 }

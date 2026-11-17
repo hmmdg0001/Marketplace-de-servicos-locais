@@ -54,8 +54,11 @@ export default function OrderDetailPage() {
   const [error, setError] = useState("");
 
   const [busy, setBusy] = useState(false);
+  const [reviewBusy, setReviewBusy] = useState(false);
   const [acaoPendente, setAcaoPendente] = useState(null);
   const [nota, setNota] = useState("");
+  const [classificacao, setClassificacao] = useState(5);
+  const [comentario, setComentario] = useState("");
   const [mensagem, setMensagem] = useState({ text: "", kind: "success" });
 
   useEffect(() => {
@@ -124,6 +127,32 @@ export default function OrderDetailPage() {
       setMensagem({ text: err.message || "Erro ao atualizar o pedido.", kind: "error" });
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleReviewSubmit(event) {
+    event.preventDefault();
+    setMensagem({ text: "", kind: "success" });
+    setReviewBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${apiBase}/orders/${id}/avaliacao`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ classificacao: Number(classificacao), comentario }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao enviar avaliação"));
+
+      setPedido(data);
+      setMensagem({ text: "Avaliação enviada. Obrigado!", kind: "success" });
+    } catch (err) {
+      setMensagem({ text: err.message || "Erro ao enviar avaliação.", kind: "error" });
+    } finally {
+      setReviewBusy(false);
     }
   }
 
@@ -279,6 +308,48 @@ export default function OrderDetailPage() {
                 Voltar
               </button>
             </form>
+          )}
+
+          {pedido.estado === "Concluído" && papel === "cliente" && (
+            pedido.avaliacao ? (
+              <div className="my-review">
+                <h3>A tua avaliação</h3>
+                <p className="review-stars" aria-label={`${pedido.avaliacao.classificacao} de 5`}>
+                  {"★".repeat(pedido.avaliacao.classificacao)}
+                  <span className="review-stars-empty">{"★".repeat(5 - pedido.avaliacao.classificacao)}</span>
+                </p>
+                {pedido.avaliacao.comentario && <p>{pedido.avaliacao.comentario}</p>}
+              </div>
+            ) : (
+              <form className="review-form" onSubmit={handleReviewSubmit}>
+                <h3>Avaliar o serviço</h3>
+                <label>
+                  Classificação
+                  <select
+                    value={classificacao}
+                    onChange={(event) => setClassificacao(Number(event.target.value))}
+                  >
+                    {[5, 4, 3, 2, 1].map((valor) => (
+                      <option key={valor} value={valor}>
+                        {"★".repeat(valor)} ({valor}/5)
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Comentário (opcional)
+                  <textarea
+                    rows={3}
+                    value={comentario}
+                    onChange={(event) => setComentario(event.target.value)}
+                    placeholder="Conta como foi a experiência"
+                  />
+                </label>
+                <button className="submit-button" type="submit" disabled={reviewBusy}>
+                  {reviewBusy ? "A enviar…" : "Enviar avaliação"}
+                </button>
+              </form>
+            )
           )}
         </div>
       </div>

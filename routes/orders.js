@@ -5,6 +5,7 @@ const { requireAuth } = require('../config/firebase');
 const Order = require('../models/order');
 const Service = require('../models/service');
 const ProviderProfile = require('../models/providerProfile');
+const Review = require('../models/review');
 const User = require('../models/user');
 
 // Máquina de estados do pedido. "por" indica quem pode executar a ação.
@@ -27,13 +28,17 @@ const POPULATE_SERVICO = {
 async function hidratar(pedidos) {
   const uids = [...new Set(pedidos.flatMap((p) => [p.clienteId, p.prestadorId]).filter(Boolean))];
 
-  const [utilizadores, perfis] = await Promise.all([
+  const pedidoIds = pedidos.map((p) => p._id);
+
+  const [utilizadores, perfis, avaliacoes] = await Promise.all([
     User.find({ uid: { $in: uids } }).select('uid name').lean(),
     ProviderProfile.find({ userId: { $in: uids } }).lean(),
+    Review.find({ pedidoId: { $in: pedidoIds } }).lean(),
   ]);
 
   const nomePorUid = new Map(utilizadores.map((u) => [u.uid, u.name]));
   const perfilPorUid = new Map(perfis.map((p) => [p.userId, p]));
+  const avaliacaoPorPedido = new Map(avaliacoes.map((a) => [String(a.pedidoId), a]));
 
   return pedidos.map((pedido) => {
     const servico = pedido.servicoId && typeof pedido.servicoId === 'object' ? pedido.servicoId : null;
@@ -62,6 +67,7 @@ async function hidratar(pedidos) {
         mediaAvaliacoes: perfil?.mediaAvaliacoes || 0,
         totalAvaliacoes: perfil?.totalAvaliacoes || 0,
       },
+      avaliacao: avaliacaoPorPedido.get(String(pedido._id)) || null,
     };
   });
 }
@@ -256,6 +262,80 @@ router.post('/:id/transicoes', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Erro ao atualizar pedido:', error.message);
     res.status(500).json({ error: 'Erro ao atualizar pedido' });
+  }
+});
+
+// POST /api/orders/:id/avaliacao - Avaliação verificada.
+// Só o cliente do pedido, só depois de Concluído e no máximo uma vez.
+router.post('/:id/avaliacao', requireAuth, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ error: 'Pedido não encontrado' });
+    }
+
+    const pedido = await Order.findById(req.params.id);
+    if (!pedido) return res.status(404).json({ error: 'Pedido não encontrado' });
+
+    if (pedido.clienteId !== req.user.uid) {
+      return res.status(403).json({ error: 'Só o cliente do pedido pode avaliar' });
+    }
+
+    if (pedido.estado !== 'Concluído') {
+      return res.status(400).json({ error: 'Só podes avaliar pedidos concluídos' });
+    }
+
+    const classificacao = Number(req.body.classificacao);
+
+    if (!Number.isInteger(classificacao) || classificacao < 1 || classificacao > 5) {
+      return res.status(400).json({ error: 'A classificação tem de ser um número de 1 a 5' });
+    }
+
+    const comentario = String(req.body.comentario || '').trim().slice(0, 1000);
+
+    const existente = await Review.findOne({ pedidoId: pedido._id });
+    if (existente) {
+      return res.status(409).json({ error: 'Este pedido já foi avaliado' });
+    }
+
+    try {
+      await Review.create({
+        pedidoId: pedido._id,
+        servicoId: pedido.servicoId,
+        clienteId: pedido.clienteId,
+        prestadorId: pedido.prestadorId,
+        classificacao,
+        comentario,
+      });
+    } catch (error) {
+      // O índice único em pedidoId é a última defesa contra dois cliques.
+      if (error.code === 11000) {
+        return res.status(409).json({ error: 'Este pedido já foi avaliado' });
+      }
+      throw error;
+    }
+
+    // Recalcula a média do prestador a partir de todas as avaliações.
+    const [estatisticas] = await Review.aggregate([
+      { $match: { prestadorId: pedido.prestadorId } },
+      { $group: { _id: null, media: { $avg: '$classificacao' }, total: { $sum: 1 } } },
+    ]);
+
+    await ProviderProfile.findOneAndUpdate(
+      { userId: pedido.prestadorId },
+      {
+        $set: {
+          mediaAvaliacoes: Math.round((estatisticas?.media || 0) * 10) / 10,
+          totalAvaliacoes: estatisticas?.total || 0,
+        },
+        $setOnInsert: { bio: '', zona: '' },
+      },
+      { upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(201).json(await pedidoHidratado(pedido._id));
+  } catch (error) {
+    console.error('Erro ao avaliar pedido:', error.message);
+    res.status(500).json({ error: 'Erro ao avaliar pedido' });
   }
 });
 

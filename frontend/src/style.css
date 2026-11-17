@@ -154,3 +154,22 @@ form textarea:focus{border-color:#81916b;outline:0;box-shadow:0 0 0 3px #8392691
 .order-form-panel h3{font:700 15px Manrope,sans-serif;color:#293a2e;margin:0 0 14px}
 @media(max-width:900px){.order-detail-grid{grid-template-columns:1fr}}
 @media(max-width:680px){.order-row{flex-direction:column;align-items:flex-start}.order-row-side{flex-direction:row;align-items:center;justify-content:space-between;width:100%}.order-card{padding:18px}}
+
+/* Avaliações */
+.reviews-section{margin-top:28px;border-top:1px solid #e7e8e1;padding-top:22px}
+.reviews-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.reviews-head h2{font:700 17px Manrope,sans-serif;color:#293a2e;margin:0}
+.reviews-head span{font-size:11px;color:#8a9086}
+.review-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.review-item{border:1px solid #e7e8e1;background:#fffefa;border-radius:6px;padding:14px 16px}
+.review-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.review-top strong{font-size:12px;color:#2f4436}
+.verified-badge{font-size:8px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#2f6b3f;background:#e8f4ea;border-radius:999px;padding:3px 8px;white-space:nowrap}
+.review-stars{font-size:14px;letter-spacing:2px;color:#c08d2c;margin:0 0 6px}
+.review-stars-empty{color:#e3e1d7}
+.review-comment{font-size:11px;line-height:1.6;color:#5c675c;margin:0 0 6px}
+.review-date{font-size:9px;color:#9aa096}
+.my-review,.review-form{margin-top:20px;border-top:1px solid #e7e8e1;padding-top:16px;text-align:left}
+.my-review h3,.review-form h3{font:700 14px Manrope,sans-serif;color:#293a2e;margin:0 0 10px}
+.my-review p{font-size:11px;line-height:1.6;color:#5c675c;margin:0 0 6px}
+@media(max-width:680px){.review-list{grid-template-columns:1fr}}

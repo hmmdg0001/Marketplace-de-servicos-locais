@@ -205,6 +205,9 @@ export default function HomePage() {
               <h3>{service.titulo}</h3>
               <p className="catalog-card-provider">
                 {service.prestador?.nome} · 📍 {service.zona || service.prestador?.zona}
+                {service.prestador?.totalAvaliacoes > 0 && (
+                  <> · ⭐ {Number(service.prestador.mediaAvaliacoes).toFixed(1)}</>
+                )}
               </p>
               <div className="catalog-card-footer">
                 <strong>{formatPrice(service.preco)}</strong>
