@@ -202,7 +202,7 @@ export default function App() {
             )}
 
             {/* Botão para criar serviço */}
-            <button className="submit-button" onClick={() => setMode('create-service') disabled={busy}>
+            <button className="submit-button" onClick={() => setMode('create-service')} disabled={busy}>
               {busy ? "A criar serviço…" : "Criar serviço"}
             </button>
           </div>
