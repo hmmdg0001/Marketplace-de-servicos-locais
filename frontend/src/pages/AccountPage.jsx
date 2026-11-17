@@ -67,7 +67,6 @@ export default function AccountPage() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [ownServices, setOwnServices] = useState([]);
-  const [allServices, setAllServices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [role, setRole] = useState("user");
   const [panel, setPanel] = useState(null); // null | "create" | "profile"
@@ -96,17 +95,6 @@ export default function AccountPage() {
     }
   }
 
-  async function loadAllServices() {
-    try {
-      const res = await fetch(`${apiBase}/services`);
-      const data = await readJson(res);
-      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao carregar serviços"));
-      setAllServices(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -120,7 +108,6 @@ export default function AccountPage() {
         setRole("user");
       }
     });
-    loadAllServices();
     fetch(`${apiBase}/categories`)
       .then(readJson)
       .then((data) => setCategories(Array.isArray(data) ? data : []))
@@ -311,7 +298,6 @@ export default function AccountPage() {
       if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao criar serviço"));
 
       setOwnServices((prev) => [data, ...prev]);
-      setAllServices((prev) => [data, ...prev]);
       notify("Serviço criado com sucesso!");
       setPanel(null);
     } catch (error) {
@@ -322,7 +308,7 @@ export default function AccountPage() {
   }
 
   async function handleDeleteService(service) {
-    const confirmed = window.confirm(`Queres apagar o serviço "${service.title}"?`);
+    const confirmed = window.confirm(`Queres apagar o serviço "${service.titulo || service.title}"?`);
     if (!confirmed) return;
 
     notify("");
@@ -337,7 +323,6 @@ export default function AccountPage() {
       if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao apagar serviço"));
 
       setOwnServices((prev) => prev.filter((svc) => svc._id !== service._id));
-      setAllServices((prev) => prev.filter((svc) => svc._id !== service._id));
       notify("Serviço apagado.");
     } catch (error) {
       notify(error.message || "Erro ao apagar serviço.", "error");
@@ -345,10 +330,6 @@ export default function AccountPage() {
       setBusy(false);
     }
   }
-
-  const communityServices = user
-    ? allServices.filter((svc) => svc.prestadorId !== user.uid)
-    : allServices;
 
   return (
       <section className="auth-layout" id="inicio">
@@ -502,35 +483,6 @@ export default function AccountPage() {
               </div>
             )}
 
-            {communityServices.length > 0 && (
-              <div className="services-section">
-                <h3>Serviços da comunidade</h3>
-                <ul className="service-list">
-                  {communityServices.map((svc) => (
-                    <li key={svc._id} className="service-item">
-                      <div>
-                        <strong>{svc.titulo || svc.title}</strong>
-                        {(svc.descricao || svc.description) && <span>{svc.descricao || svc.description}</span>}
-                        {(svc.zona || svc.location) && <span>📍 {svc.zona || svc.location}</span>}
-                        {(svc.preco > 0 || svc.price > 0) && (
-                          <span>Desde {Number(svc.preco || svc.price).toFixed(2).replace(".", ",")} €</span>
-                        )}
-                      </div>
-                      {role === "admin" && (
-                        <button
-                          className="danger-button"
-                          type="button"
-                          onClick={() => handleDeleteService(svc)}
-                          disabled={busy}
-                        >
-                          Apagar
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
         ) : (
           <div className="form-panel">
