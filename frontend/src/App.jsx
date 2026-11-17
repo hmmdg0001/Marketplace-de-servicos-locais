@@ -9,6 +9,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth } from "./firebase.js";
+import { PORTUGAL_CITIES } from "./data/cities.js";
 
 const apiBase = "/api";
 
@@ -413,7 +414,19 @@ export default function App() {
                 <form onSubmit={handleCreateService}>
                   <label>Título do serviço<input type="text" name="title" required /></label>
                   <label>Descrição<input type="text" name="description" placeholder="Descreve o serviço" /></label>
-                  <label>Localização<input type="text" name="location" placeholder="Ex: Lisboa, Porto" /></label>
+                  <label>
+                    Localização
+                    <select name="location" defaultValue="" required>
+                      <option value="" disabled>Escolhe a tua cidade</option>
+                      {PORTUGAL_CITIES.map((group) => (
+                        <optgroup key={group.district} label={group.district}>
+                          {group.cities.map((city) => (
+                            <option key={city} value={city}>{city}</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </label>
                   <button className="submit-button" type="submit" disabled={busy}>
                     {busy ? "A guardar…" : "Guardar serviço"}
                   </button>
