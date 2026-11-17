@@ -69,6 +69,8 @@ export default function AccountPage() {
   const [ownServices, setOwnServices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [role, setRole] = useState("user");
+  const [profile, setProfile] = useState(null); // { user, provider }
+  const [profileForm, setProfileForm] = useState({ name: "", telefone: "", cidade: "", bio: "", zona: "" });
   const [panel, setPanel] = useState(null); // null | "create" | "profile"
   const [resetEmail, setResetEmail] = useState("");
   const [showResetForm, setShowResetForm] = useState(false);
@@ -78,6 +80,35 @@ export default function AccountPage() {
 
   function notify(text, kind = "success") {
     setNotice({ text, kind });
+  }
+
+  function setProfileField(field, value) {
+    setProfileForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function loadProfile(firebaseUser) {
+    if (!firebaseUser) {
+      setProfile(null);
+      return;
+    }
+    try {
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch(`${apiBase}/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao carregar perfil"));
+      setProfile(data);
+      setProfileForm({
+        name: data.user?.name || firebaseUser.displayName || "",
+        telefone: data.user?.telefone || "",
+        cidade: data.user?.cidade || "",
+        bio: data.provider?.bio || "",
+        zona: data.provider?.zona || data.user?.cidade || "",
+      });
+    } catch (err) {
+      console.error("Erro ao carregar perfil:", err);
+    }
   }
 
   async function loadOwnServices(firebaseUser) {
@@ -103,9 +134,12 @@ export default function AccountPage() {
       setAuthReady(true);
       loadOwnServices(currentUser);
       if (currentUser) {
-        syncUser(currentUser, currentUser.displayName || "");
+        // Só carrega o perfil depois de garantir que o utilizador existe no Mongo.
+        syncUser(currentUser, currentUser.displayName || "").then(() => loadProfile(currentUser));
       } else {
         setRole("user");
+        setProfile(null);
+        setProfileForm({ name: "", telefone: "", cidade: "", bio: "", zona: "" });
       }
     });
     fetch(`${apiBase}/categories`)
@@ -224,20 +258,45 @@ export default function AccountPage() {
     setBusy(true);
     try {
       const token = await user.getIdToken();
-      const newName = event.target.name.value.trim();
+      const novoNome = profileForm.name.trim();
+
+      if (!novoNome) {
+        notify("O nome não pode ficar vazio.", "error");
+        setBusy(false);
+        return;
+      }
+
       const res = await fetch(`${apiBase}/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name: newName }),
+        body: JSON.stringify({
+          name: novoNome,
+          telefone: profileForm.telefone,
+          cidade: profileForm.cidade,
+          bio: profileForm.bio,
+          zona: profileForm.zona,
+        }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao atualizar perfil"));
 
-      await updateProfile(user, { displayName: newName });
-      setDisplayName(newName);
+      if (data.user?.name && data.user.name !== displayName) {
+        await updateProfile(user, { displayName: data.user.name });
+        setDisplayName(data.user.name);
+      }
+
+      setProfile({ user: data.user, provider: data.provider });
+      setProfileForm((prev) => ({
+        ...prev,
+        name: data.user?.name || prev.name,
+        telefone: data.user?.telefone || "",
+        cidade: data.user?.cidade || "",
+        bio: data.provider?.bio || "",
+        zona: data.provider?.zona || "",
+      }));
       notify("Perfil atualizado com sucesso!");
     } catch (error) {
       notify(error.message || "Erro ao atualizar perfil.", "error");
@@ -352,7 +411,30 @@ export default function AccountPage() {
             <p className="form-subtitle">A tua conta ServiPerto está pronta.</p>
             <p className="account-email">{user.email}</p>
 
-            {role === "admin" && <p className="role-badge">Administrador</p>}
+            {(role === "admin" || profile?.provider) && (
+              <div className="account-badges">
+                {role === "admin" && <span className="role-badge">Administrador</span>}
+                {profile?.provider && <span className="role-badge">Prestador</span>}
+              </div>
+            )}
+
+            {(profile?.user?.cidade || profile?.user?.telefone) && (
+              <p className="account-meta">
+                {profile.user.cidade && <>📍 {profile.user.cidade}</>}
+                {profile.user.cidade && profile.user.telefone && <span aria-hidden="true"> · </span>}
+                {profile.user.telefone && <>📞 {profile.user.telefone}</>}
+              </p>
+            )}
+
+            {profile?.provider && (
+              <p className="account-provider-stats">
+                {profile.provider.totalAvaliacoes > 0
+                  ? `${profile.provider.mediaAvaliacoes.toFixed(1)}/5 em ${profile.provider.totalAvaliacoes} avaliação(ões)`
+                  : "Ainda sem avaliações"}
+                <span aria-hidden="true"> · </span>
+                {profile.provider.totalServicos} serviço(s) publicado(s)
+              </p>
+            )}
 
             <p className={`form-message ${emailVerified ? "success" : "error"}`}>
               {emailVerified ? "Email verificado ✓" : "Email não verificado"}
@@ -453,10 +535,74 @@ export default function AccountPage() {
             {/* Painel: definições / perfil */}
             {panel === "profile" && (
               <div className="settings-section">
-                <h3>Minhas definições</h3>
+                <h3>O meu perfil</h3>
                 <form onSubmit={handleProfileUpdate}>
-                  <label>Nome<input type="text" name="name" defaultValue={displayName} required /></label>
-                  <label>Email<input type="email" name="email" defaultValue={user.email || ""} readOnly /></label>
+                  <label>
+                    Nome
+                    <input
+                      type="text"
+                      name="name"
+                      value={profileForm.name}
+                      onChange={(event) => setProfileField("name", event.target.value)}
+                      required
+                    />
+                  </label>
+                  <label>Email<input type="email" name="email" value={user.email || ""} readOnly /></label>
+                  <label>
+                    Telefone
+                    <input
+                      type="tel"
+                      name="telefone"
+                      value={profileForm.telefone}
+                      onChange={(event) => setProfileField("telefone", event.target.value)}
+                      placeholder="Opcional"
+                    />
+                  </label>
+                  <label>
+                    Concelho
+                    <select
+                      name="cidade"
+                      value={profileForm.cidade}
+                      onChange={(event) => setProfileField("cidade", event.target.value)}
+                    >
+                      <option value="">Escolhe o teu concelho</option>
+                      {PORTUGAL_CITIES.map((group) => (
+                        <optgroup key={group.district} label={group.district}>
+                          {group.cities.map((city) => (
+                            <option key={city} value={city}>{city}</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Sobre mim
+                    <textarea
+                      name="bio"
+                      rows={3}
+                      value={profileForm.bio}
+                      onChange={(event) => setProfileField("bio", event.target.value)}
+                      placeholder="Uma pequena apresentação para os clientes"
+                    />
+                  </label>
+                  <label>
+                    Zona de atendimento
+                    <select
+                      name="zona"
+                      value={profileForm.zona}
+                      onChange={(event) => setProfileField("zona", event.target.value)}
+                    >
+                      <option value="">Escolhe a zona</option>
+                      {PORTUGAL_CITIES.map((group) => (
+                        <optgroup key={group.district} label={group.district}>
+                          {group.cities.map((city) => (
+                            <option key={city} value={city}>{city}</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </label>
+                  <p className="field-hint">A descrição e a zona de atendimento aparecem na página dos teus serviços.</p>
 
                   {emailVerified ? (
                     <p className="form-message success">Email verificado ✓</p>

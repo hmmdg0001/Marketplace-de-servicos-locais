@@ -99,3 +99,15 @@ form select:invalid{color:#b0b4ad}
 .provider-card-meta{font-size:10px;color:#8a9086}
 @media(max-width:900px){.catalog-grid{grid-template-columns:repeat(2,1fr)}.service-detail{grid-template-columns:1fr}.catalog-search select{width:160px}}
 @media(max-width:680px){.catalog-grid{grid-template-columns:1fr}.catalog-search{flex-direction:column}.catalog-search select{width:100%}.catalog-search .submit-button{width:100%}.topbar-nav{gap:14px;font-size:10px}}
+
+/* Perfil e conta */
+.account-badges{display:flex;justify-content:center;gap:8px;margin:-8px 0 14px}
+.account-badges .role-badge{margin:0}
+.account-meta{font-size:11px;color:#667267;margin:0 0 6px}
+.account-provider-stats{font-size:10px;color:#8a9086;margin:0 0 14px}
+.settings-section{text-align:left;margin-top:22px;border-top:1px solid #e7e8e1;padding-top:22px}
+.settings-section h3{font:700 15px Manrope,sans-serif;color:#293a2e;margin:0 0 14px}
+form textarea{display:block;width:100%;min-height:76px;margin-top:7px;border:1px solid #e5e6df;background:#fffefa;border-radius:4px;padding:10px 12px;font:inherit;font-size:12px;line-height:1.5;color:#344237;resize:vertical}
+form textarea::placeholder{color:#b0b4ad}
+form textarea:focus{border-color:#81916b;outline:0;box-shadow:0 0 0 3px #8392691c}
+.field-hint{font-size:10px;line-height:1.5;color:#9a9d94;margin:-4px 0 14px}
