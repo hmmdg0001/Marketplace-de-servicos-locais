@@ -95,10 +95,12 @@ router.put('/', requireAuth, async (req, res) => {
         if (Object.keys(alteracoes).length > 0) {
           await ProviderProfile.updateOne({ userId: req.user.uid }, { $set: alteracoes });
         }
-      } else if (bio || zona) {
+      } else if (bio) {
+        // Só ativa o perfil de prestador quando a pessoa escreve a
+        // apresentação. Publicar um serviço também o faz automaticamente.
         await ProviderProfile.create({
           userId: req.user.uid,
-          bio: bio || '',
+          bio,
           zona: zona || cidade,
         });
       }
