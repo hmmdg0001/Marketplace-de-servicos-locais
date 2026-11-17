@@ -1,12 +1,33 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { apiBase, readJson, formatPrice } from "../lib/api.js";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase.js";
+import { apiBase, readJson, apiErrorMessage, formatPrice } from "../lib/api.js";
+
+function hoje() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export default function ServiceDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [orderError, setOrderError] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthReady(true);
+    });
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     let cancelado = false;
@@ -32,6 +53,35 @@ export default function ServiceDetailPage() {
     };
   }, [id]);
 
+  async function handleOrderSubmit(event) {
+    event.preventDefault();
+    setOrderError("");
+    setBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${apiBase}/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          servicoId: service._id,
+          descricao: event.target.descricao.value,
+          dataDesejada: event.target.dataDesejada.value,
+          morada: event.target.morada.value,
+        }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao enviar pedido"));
+      navigate(`/pedidos/${data._id}`);
+    } catch (err) {
+      setOrderError(err.message || "Erro ao enviar pedido.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading) {
     return <section className="catalog-page"><p className="catalog-count">A carregar serviço…</p></section>;
   }
@@ -47,6 +97,7 @@ export default function ServiceDetailPage() {
 
   const media = service.prestador?.mediaAvaliacoes || 0;
   const totalAvaliacoes = service.prestador?.totalAvaliacoes || 0;
+  const proprio = user?.uid === service.prestador?.uid;
 
   return (
     <section className="catalog-page">
@@ -82,10 +133,60 @@ export default function ServiceDetailPage() {
 
           <p className="service-detail-price">Desde <strong>{formatPrice(service.preco)}</strong></p>
 
-          <button className="submit-button" type="button" disabled>
-            Pedir este serviço
-          </button>
-          <p className="service-detail-note">Os pedidos entram na próxima fase do projeto.</p>
+          {authReady && !user && (
+            <>
+              <Link className="submit-button" to="/conta">Inicia sessão para pedir este serviço</Link>
+              <p className="service-detail-note">Precisas de conta para enviar um pedido ao prestador.</p>
+            </>
+          )}
+
+          {user && proprio && (
+            <p className="form-message">Este é um dos teus serviços.</p>
+          )}
+
+          {user && !proprio && service.ativo && !showForm && (
+            <button className="submit-button" type="button" onClick={() => { setShowForm(true); setOrderError(""); }}>
+              Pedir este serviço
+            </button>
+          )}
+
+          {user && !proprio && service.ativo && showForm && (
+            <div className="order-form-panel">
+              <h3>Enviar pedido ao prestador</h3>
+              <form onSubmit={handleOrderSubmit}>
+                <label>
+                  Descrição do trabalho
+                  <textarea
+                    name="descricao"
+                    rows={4}
+                    required
+                    placeholder="Explica o que precisas, o tamanho do espaço, etc."
+                  />
+                </label>
+                <label>
+                  Data desejada
+                  <input type="date" name="dataDesejada" min={hoje()} required />
+                </label>
+                <label>
+                  Morada
+                  <input type="text" name="morada" required placeholder="Rua, número, código postal" />
+                </label>
+                <p className="field-hint">O valor do serviço é {formatPrice(service.preco)}. O prestador aceita ou recusa o pedido.</p>
+                {orderError && <p className="form-message error">{orderError}</p>}
+                <button className="submit-button" type="submit" disabled={busy}>
+                  {busy ? "A enviar…" : "Enviar pedido"}
+                </button>
+                <button
+                  className="submit-button"
+                  type="button"
+                  onClick={() => { setShowForm(false); setOrderError(""); }}
+                  disabled={busy}
+                >
+                  Cancelar
+                </button>
+              </form>
+            </div>
+          )}
         </div>
       </div>
 

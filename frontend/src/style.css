@@ -111,3 +111,46 @@ form textarea{display:block;width:100%;min-height:76px;margin-top:7px;border:1px
 form textarea::placeholder{color:#b0b4ad}
 form textarea:focus{border-color:#81916b;outline:0;box-shadow:0 0 0 3px #8392691c}
 .field-hint{font-size:10px;line-height:1.5;color:#9a9d94;margin:-4px 0 14px}
+
+/* Pedidos */
+.orders-switch{max-width:360px;margin:0 auto 20px}
+.catalog-hero .submit-button{max-width:320px;margin:0 auto}
+.orders-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.order-row{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid #e7e8e1;background:#fffefa;border-radius:6px;padding:16px 18px}
+.order-row-main{min-width:0}
+.order-row-main h3{font:700 16px Manrope,sans-serif;color:#293a2e;margin:2px 0 6px}
+.order-row-meta{font-size:11px;line-height:1.6;color:#7d857b;margin:0}
+.order-row-side{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.order-row-side strong{font-size:13px;color:#28563e}
+.order-badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.estado-submetido{background:#eef0e6;color:#5d6b3f}
+.estado-aceite{background:#e8f0fa;color:#365d85}
+.estado-em-execucao{background:#fdf3e2;color:#8a6420}
+.estado-aguarda-confirmacao{background:#f3ecfa;color:#6a4b8a}
+.estado-concluido{background:#e8f4ea;color:#2f6b3f}
+.estado-recusado,.estado-cancelado{background:#fbefeb;color:#8d3f35}
+.order-detail-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start}
+.order-card{border:1px solid #e7e8e1;background:#fffefa;border-radius:8px;padding:24px}
+.order-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.order-card-head h1{font:700 26px Manrope,sans-serif;letter-spacing:-.04em;color:#293a2e;margin:4px 0 10px}
+.order-card-people{font-size:12px;color:#5c675c;margin:0 0 18px}
+.order-facts{display:grid;gap:12px;margin:0 0 18px}
+.order-facts dt{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#9aa096;margin-bottom:3px}
+.order-facts dd{margin:0;font-size:13px;line-height:1.6;color:#3d4a40}
+.order-actions h2,.order-history h2{font:700 17px Manrope,sans-serif;color:#293a2e;margin:0 0 10px}
+.order-role{font-size:11px;color:#7d857b;margin:0 0 16px}
+.order-action-buttons{display:grid;gap:8px}
+.order-note-form{margin-top:4px}
+.order-history{margin-top:28px;border:1px solid #e7e8e1;background:#fffefa;border-radius:8px;padding:24px}
+.order-timeline{list-style:none;margin:0;padding:0}
+.order-timeline li{display:flex;gap:14px;position:relative;padding-bottom:18px}
+.order-timeline li:last-child{padding-bottom:0}
+.order-timeline li:not(:last-child)::before{content:"";position:absolute;left:5px;top:15px;bottom:0;width:1px;background:#e3e5dc}
+.timeline-dot{width:11px;height:11px;border-radius:50%;background:#9aa096;margin-top:3px;flex:0 0 auto;box-shadow:0 0 0 3px #fffefa}
+.order-timeline strong{display:block;font-size:12px;color:#2f4436}
+.order-timeline small{display:block;font-size:10px;color:#9aa096;margin-top:2px}
+.order-timeline p{font-size:11px;line-height:1.5;color:#6b756a;margin:6px 0 0;background:#fafaf6;border-radius:4px;padding:8px 10px}
+.order-form-panel{margin-top:18px;border-top:1px solid #e7e6de;padding-top:18px;text-align:left}
+.order-form-panel h3{font:700 15px Manrope,sans-serif;color:#293a2e;margin:0 0 14px}
+@media(max-width:900px){.order-detail-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.order-row{flex-direction:column;align-items:flex-start}.order-row-side{flex-direction:row;align-items:center;justify-content:space-between;width:100%}.order-card{padding:18px}}

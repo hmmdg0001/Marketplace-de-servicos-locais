@@ -2,6 +2,8 @@ import { Link, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage.jsx";
 import ServiceDetailPage from "./pages/ServiceDetailPage.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
+import OrdersPage from "./pages/OrdersPage.jsx";
+import OrderDetailPage from "./pages/OrderDetailPage.jsx";
 
 export default function App() {
   return (
@@ -14,6 +16,7 @@ export default function App() {
 
         <nav className="topbar-nav" aria-label="Navegação principal">
           <Link to="/">Explorar</Link>
+          <Link to="/pedidos">Os meus pedidos</Link>
           <Link to="/conta">A minha conta</Link>
         </nav>
       </header>
@@ -21,6 +24,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/servico/:id" element={<ServiceDetailPage />} />
+        <Route path="/pedidos" element={<OrdersPage />} />
+        <Route path="/pedidos/:id" element={<OrderDetailPage />} />
         <Route path="/conta" element={<AccountPage />} />
         <Route path="*" element={<HomePage />} />
       </Routes>

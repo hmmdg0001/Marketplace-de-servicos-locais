@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -478,6 +479,7 @@ export default function AccountPage() {
             {/* Botões de ação - só aparecem quando nenhum painel está aberto */}
             {panel === null && (
               <>
+                <Link className="submit-button" to="/pedidos">Os meus pedidos</Link>
                 <button className="submit-button" type="button" onClick={() => { setPanel("create"); notify(""); }} disabled={busy}>
                   Criar serviço
                 </button>
