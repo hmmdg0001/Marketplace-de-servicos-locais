@@ -92,14 +92,14 @@ export default function App() {
         });
       } else {
         // Login via Firebase Client
-        await signInWithEmailAndPassword(auth, email.trim(), password);
+        const result = await signInWithEmailAndPassword(auth, email.trim(), password);
         setMessage("Sessão iniciada com sucesso.");
 
         // Login no backend (criar/obter usuário no MongoDB)
         await fetch(`${apiBase}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken: (await auth).currentUser.getIdToken() }),
+          body: JSON.stringify({ idToken: result.user.getIdToken() }),
         });
       }
     } catch (error) {
