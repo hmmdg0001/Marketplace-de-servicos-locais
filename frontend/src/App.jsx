@@ -20,7 +20,10 @@ const friendlyErrors = {
   "auth/wrong-password": "Email ou palavra-passe incorretos.",
   "auth/user-not-found": "Não existe conta com este email. Cria uma conta primeiro.",
   "auth/missing-email": "Escreve um email válido.",
+  "auth/missing-password": "Escreve a palavra-passe.",
   "auth/weak-password": "Escolhe uma palavra-passe com pelo menos 6 caracteres.",
+  "auth/requires-recent-login": "Por segurança, termina a sessão, entra outra vez e repete a ação.",
+  "auth/user-disabled": "Esta conta foi desativada. Contacta o suporte.",
   "auth/too-many-requests": "Foram feitas demasiadas tentativas. Tenta novamente mais tarde.",
   "auth/network-request-failed": "Não foi possível ligar. Verifica a tua ligação à internet.",
   "auth/operation-not-allowed": "O registo por email ainda não está ativado no Firebase. Ativa o método Email/Palavra-passe em Authentication → Sign-in method.",
@@ -111,7 +114,7 @@ export default function App() {
       setAuthReady(true);
       loadOwnServices(currentUser);
       if (currentUser) {
-        syncUser(currentUser);
+        syncUser(currentUser, currentUser.displayName || "");
       } else {
         setRole("user");
       }
@@ -122,13 +125,13 @@ export default function App() {
 
   // Sincroniza o utilizador no MongoDB (a rota de login cria se não existir)
   // e traz o papel (user/admin) guardado na base de dados.
-  async function syncUser(firebaseUser) {
+  async function syncUser(firebaseUser, nameOverride = "") {
     try {
       const idToken = await firebaseUser.getIdToken();
       const res = await fetch(`${apiBase}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ idToken, name: nameOverride }),
       });
       const data = await readJson(res);
       if (res.ok && data.user?.role) setRole(data.user.role);
@@ -145,10 +148,26 @@ export default function App() {
     setBusy(true);
     try {
       if (isRegister) {
+        const cleanName = name.trim();
+        if (!cleanName) {
+          notify("Escreve o teu nome para criar a conta.", "error");
+          setBusy(false);
+          return;
+        }
+
         const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
-        await updateProfile(result.user, { displayName: name.trim() });
-        setDisplayName(name.trim());
-        await syncUser(result.user);
+
+        // Se o updateProfile falhar a conta já existe, por isso seguimos em frente.
+        try {
+          await updateProfile(result.user, { displayName: cleanName });
+        } catch (err) {
+          console.error("Não foi possível guardar o nome no Firebase:", err);
+        }
+        setDisplayName(cleanName);
+
+        // O nome vai explícito para o backend: o token pode ainda não ter o claim "name".
+        await syncUser(result.user, cleanName);
+
         // Envia email de verificação logo após o registo
         try {
           await sendEmailVerification(result.user);
@@ -158,7 +177,7 @@ export default function App() {
         }
       } else {
         const result = await signInWithEmailAndPassword(auth, email.trim(), password);
-        await syncUser(result.user);
+        await syncUser(result.user, result.user.displayName || "");
         notify("Sessão iniciada com sucesso.");
       }
     } catch (error) {
@@ -213,21 +232,18 @@ export default function App() {
     setBusy(true);
     try {
       const token = await user.getIdToken();
+      const newName = event.target.name.value.trim();
       const res = await fetch(`${apiBase}/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: event.target.name.value,
-          email: user.email,
-        }),
+        body: JSON.stringify({ name: newName }),
       });
       const data = await readJson(res);
       if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao atualizar perfil"));
 
-      const newName = event.target.name.value;
       await updateProfile(user, { displayName: newName });
       setDisplayName(newName);
       notify("Perfil atualizado com sucesso!");

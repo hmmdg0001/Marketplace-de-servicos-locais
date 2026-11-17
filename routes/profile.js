@@ -3,38 +3,33 @@ const router = express.Router();
 const { requireAuth } = require('../config/firebase');
 const User = require('../models/user');
 
-// PUT /api/profile - Editar perfil do utilizador
+// PUT /api/profile - Editar o nome do utilizador.
+// O email não é editável aqui de propósito: mudar o email no Firebase Admin
+// volta a marcar a conta como "não verificada" e obriga a um novo fluxo de
+// verificação. Para já o email fica fixo.
 router.put('/', requireAuth, async (req, res) => {
   try {
-    const { name, email } = req.body;
-    const uid = req.user.uid;
+    const name = String(req.body.name || '').trim();
 
-    if (!name && !email) {
-      return res.status(400).json({ error: 'Pelo menos um campo (name ou email) é obrigatório' });
+    if (!name) {
+      return res.status(400).json({ error: 'O nome não pode ficar vazio' });
     }
 
-    // 1. Atualizar no Firebase Auth
     const admin = require('../config/firebase').admin;
-    const updateData = {};
-    if (name) updateData.displayName = name;
-    if (email) updateData.email = email;
+    await admin.auth().updateUser(req.user.uid, { displayName: name });
 
-    await admin.auth().updateUser(uid, updateData);
-
-    // 2. Atualizar no MongoDB
-    let user = await User.findOne({ uid });
-
-    if (user) {
-      if (name) user.name = name;
-      if (email) user.email = email;
-      await user.save();
-    } else {
-      user = await User.create({ uid, name, email });
-    }
+    const user = await User.findOneAndUpdate(
+      { uid: req.user.uid },
+      {
+        $set: { name },
+        $setOnInsert: { email: req.user.email },
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
 
     res.json({
       message: 'Perfil atualizado com sucesso',
-      user: { id: user._id, uid: user.uid, email: user.email, name: user.name },
+      user: { id: user._id, uid: user.uid, email: user.email, name: user.name, role: user.role },
     });
   } catch (error) {
     console.error('Erro ao atualizar perfil:', error.message);

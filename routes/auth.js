@@ -3,50 +3,34 @@ const router = express.Router();
 const { verifyIdToken, requireAuth } = require('../config/firebase');
 const User = require('../models/user');
 
-// POST /api/auth/register - Registar com Firebase + guardar no MongoDB
-router.post('/register', async (req, res) => {
-  try {
-    const { email, password, name } = req.body;
-
-    // 1. Criar usuário no Firebase Auth
-    const admin = require('../config/firebase').admin;
-    const userRecord = await admin.auth().createUser({ email, password });
-
-    // 2. Guardar dados básicos no MongoDB
-    const userDoc = await User.create({
-      uid: userRecord.uid,
-      email: userRecord.email,
-      name,
-    });
-
-    res.status(201).json({
-      message: 'Conta criada com sucesso',
-      user: { id: userDoc._id, uid: userDoc.uid, email: userDoc.email, name: userDoc.name, role: userDoc.role },
-    });
-  } catch (error) {
-    console.error('Erro no registo:', error.message);
-    res.status(400).json({ error: error.message || 'Erro ao registar utilizador' });
-  }
-});
-
-// POST /api/auth/login - Login (verificar token Firebase)
+// POST /api/auth/login - Sincroniza o utilizador do Firebase com o MongoDB.
+// O registo/login acontece no browser (SDK client). Depois o frontend envia
+// o idToken para aqui, e o utilizador fica guardado no MongoDB.
 router.post('/login', async (req, res) => {
   try {
-    const { idToken } = req.body;
+    const { idToken, name } = req.body;
     if (!idToken) return res.status(400).json({ error: 'Token obrigatório' });
 
-    // Verificar token com Firebase Admin
     const decoded = await verifyIdToken(idToken);
+    // Fallback: o token pode ainda não trazer o claim "name" (ex.: logo após
+    // o updateProfile). Nesse caso usamos a parte antes do @ do email, para o
+    // MongoDB nunca receber um nome vazio.
+    const emailPrefix = String(decoded.email || 'utilizador').split('@')[0];
+    const displayName = String(name || decoded.name || emailPrefix).trim() || emailPrefix;
 
-    // Buscar ou criar utilizador no MongoDB
-    let user = await User.findOne({ uid: decoded.uid });
+    // Upsert atómico: o registo e o onAuthStateChanged podem sincronizar
+    // ao mesmo tempo, e assim nunca há utilizadores duplicados.
+    const user = await User.findOneAndUpdate(
+      { uid: decoded.uid },
+      { $setOnInsert: { uid: decoded.uid, email: decoded.email, name: displayName } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
 
-    if (!user) {
-      user = await User.create({
-        uid: decoded.uid,
-        email: decoded.email,
-        name: decoded.name || '',
-      });
+    // Se o nome ficou vazio (token emitido antes do updateProfile),
+    // completa agora com o nome que veio do browser.
+    if (!user.name && displayName) {
+      user.name = displayName;
+      await user.save();
     }
 
     res.json({
@@ -55,7 +39,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Erro no login:', error.message);
-    res.status(401).json({ error: 'Token inválido' });
+    res.status(401).json({ error: 'Token inválido ou expirado' });
   }
 });
 
