@@ -18,6 +18,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/profile', require('./routes/profile'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/services', require('./routes/services'));
+app.use('/api/orders', require('./routes/orders'));
 
 // Rota raiz
 app.get('/', (req, res) => {
