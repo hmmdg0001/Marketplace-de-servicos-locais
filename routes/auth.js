@@ -21,7 +21,7 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({
       message: 'Conta criada com sucesso',
-      user: { id: userDoc._id, uid: userDoc.uid, email: userDoc.email, name: userDoc.name },
+      user: { id: userDoc._id, uid: userDoc.uid, email: userDoc.email, name: userDoc.name, role: userDoc.role },
     });
   } catch (error) {
     console.error('Erro no registo:', error.message);
@@ -51,7 +51,7 @@ router.post('/login', async (req, res) => {
 
     res.json({
       message: 'Login bem-sucedido',
-      user: { id: user._id, uid: user.uid, email: user.email, name: user.name },
+      user: { id: user._id, uid: user.uid, email: user.email, name: user.name, role: user.role },
     });
   } catch (error) {
     console.error('Erro no login:', error.message);

@@ -25,3 +25,16 @@ form label{display:block;font-size:11px;font-weight:600;color:#485349;margin-bot
 .account-panel{text-align:center;padding-top:48px;padding-bottom:48px}.account-panel h2{font:700 25px Manrope,sans-serif;letter-spacing:-.045em;color:#293a2e;margin:0 0 7px}.account-panel .form-subtitle{margin-bottom:20px}.account-avatar{width:52px;height:52px;margin:0 auto 17px;border-radius:50%;display:grid;place-items:center;background:#e7eddd;color:#31563e;font:700 21px Manrope,sans-serif}.account-email{padding:12px;border:1px solid #e7e8e1;background:#fafaf6;border-radius:4px;color:#667267;font-size:12px;margin-bottom:20px;overflow-wrap:anywhere}
 @media(max-width:900px){.page-shell{padding:0 5%}.auth-layout{gap:5%;grid-template-columns:1fr 1fr}.form-panel{padding:32px 26px 24px}.intro-panel{min-height:400px}}
 @media(max-width:680px){.page-shell{padding:0 22px}.topbar{height:72px}.topbar-note{font-size:10px}.auth-layout{display:flex;flex-direction:column;align-items:stretch;padding:30px 0 42px;gap:22px}.intro-panel{min-height:auto;padding:6px 0 0}.eyebrow{margin-bottom:14px}h1{font-size:37px;max-width:480px;margin-bottom:12px}.intro-copy{font-size:13px;margin-bottom:17px;max-width:480px}.neighbourhood-card,.decor{display:none}.form-panel{max-width:none;padding:28px 24px 23px;justify-self:auto}.form-icon{display:none}.form-subtitle{margin-bottom:17px}.footer{height:52px;font-size:9px}}
+
+/* Papéis e listagem de serviços */
+.role-badge{display:inline-block;margin:-8px 0 18px;padding:5px 11px;border-radius:999px;background:#eef0e6;color:#5d6b3f;font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+.services-section{margin-top:24px;text-align:left}
+.services-section h3{font:700 15px Manrope,sans-serif;color:#293a2e;margin:0 0 10px}
+.service-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.service-item{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border:1px solid #e7e8e1;background:#fafaf6;border-radius:5px;padding:12px}
+.service-item > div{min-width:0}
+.service-item strong{display:block;font-size:12px;color:#2f4436;overflow-wrap:anywhere}
+.service-item span{display:block;font-size:10px;line-height:1.5;color:#7d857b;margin-top:3px;overflow-wrap:anywhere}
+.danger-button{flex:0 0 auto;border:0;border-radius:4px;background:#8d3f35;color:#fff;font-size:10px;font-weight:700;padding:8px 12px;cursor:pointer;transition:background .15s}
+.danger-button:hover{background:#74322a}
+.danger-button:disabled{opacity:.6;cursor:wait}

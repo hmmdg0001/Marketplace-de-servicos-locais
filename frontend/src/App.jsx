@@ -63,6 +63,8 @@ export default function App() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [ownServices, setOwnServices] = useState([]);
+  const [allServices, setAllServices] = useState([]);
+  const [role, setRole] = useState("user");
   const [panel, setPanel] = useState(null); // null | "create" | "profile"
   const [resetEmail, setResetEmail] = useState("");
   const [showResetForm, setShowResetForm] = useState(false);
@@ -89,6 +91,17 @@ export default function App() {
     }
   }
 
+  async function loadAllServices() {
+    try {
+      const res = await fetch(`${apiBase}/services`);
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao carregar serviços"));
+      setAllServices(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -96,18 +109,33 @@ export default function App() {
       setEmailVerified(Boolean(currentUser?.emailVerified));
       setAuthReady(true);
       loadOwnServices(currentUser);
+      if (currentUser) {
+        syncUser(currentUser);
+      } else {
+        setRole("user");
+      }
     });
+    loadAllServices();
     return unsubscribe;
   }, []);
 
-  // Sincroniza o utilizador no MongoDB (rota de login cria se não existir)
+  // Sincroniza o utilizador no MongoDB (a rota de login cria se não existir)
+  // e traz o papel (user/admin) guardado na base de dados.
   async function syncUser(firebaseUser) {
-    const idToken = await firebaseUser.getIdToken();
-    await fetch(`${apiBase}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
-    });
+    try {
+      const idToken = await firebaseUser.getIdToken();
+      const res = await fetch(`${apiBase}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      const data = await readJson(res);
+      if (res.ok && data.user?.role) setRole(data.user.role);
+      return data.user || null;
+    } catch (err) {
+      console.error("Erro ao sincronizar utilizador:", err);
+      return null;
+    }
   }
 
   async function handleSubmit(event) {
@@ -259,6 +287,7 @@ export default function App() {
       if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao criar serviço"));
 
       setOwnServices((prev) => [data, ...prev]);
+      setAllServices((prev) => [data, ...prev]);
       notify("Serviço criado com sucesso!");
       setPanel(null);
     } catch (error) {
@@ -267,6 +296,35 @@ export default function App() {
       setBusy(false);
     }
   }
+
+  async function handleDeleteService(service) {
+    const confirmed = window.confirm(`Queres apagar o serviço "${service.title}"?`);
+    if (!confirmed) return;
+
+    notify("");
+    setBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${apiBase}/services/${service._id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao apagar serviço"));
+
+      setOwnServices((prev) => prev.filter((svc) => svc._id !== service._id));
+      setAllServices((prev) => prev.filter((svc) => svc._id !== service._id));
+      notify("Serviço apagado.");
+    } catch (error) {
+      notify(error.message || "Erro ao apagar serviço.", "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const communityServices = user
+    ? allServices.filter((svc) => svc.userId !== user.uid)
+    : allServices;
 
   return (
     <main className="page-shell">
@@ -298,6 +356,8 @@ export default function App() {
             <p className="form-subtitle">A tua conta ServiPerto está pronta.</p>
             <p className="account-email">{user.email}</p>
 
+            {role === "admin" && <p className="role-badge">Administrador</p>}
+
             <p className={`form-message ${emailVerified ? "success" : "error"}`}>
               {emailVerified ? "Email verificado ✓" : "Email não verificado"}
             </p>
@@ -312,12 +372,22 @@ export default function App() {
             {ownServices.length > 0 && (
               <div className="services-section">
                 <h3>Os meus serviços</h3>
-                <ul>
+                <ul className="service-list">
                   {ownServices.map((svc) => (
-                    <li key={svc._id}>
-                      <strong>{svc.title}</strong>
-                      {svc.description && <span>{svc.description}</span>}
-                      {svc.location && <span>{svc.location}</span>}
+                    <li key={svc._id} className="service-item">
+                      <div>
+                        <strong>{svc.title}</strong>
+                        {svc.description && <span>{svc.description}</span>}
+                        {svc.location && <span>📍 {svc.location}</span>}
+                      </div>
+                      <button
+                        className="danger-button"
+                        type="button"
+                        onClick={() => handleDeleteService(svc)}
+                        disabled={busy}
+                      >
+                        Apagar
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -384,6 +454,33 @@ export default function App() {
                     Voltar
                   </button>
                 </form>
+              </div>
+            )}
+
+            {communityServices.length > 0 && (
+              <div className="services-section">
+                <h3>Serviços da comunidade</h3>
+                <ul className="service-list">
+                  {communityServices.map((svc) => (
+                    <li key={svc._id} className="service-item">
+                      <div>
+                        <strong>{svc.title}</strong>
+                        {svc.description && <span>{svc.description}</span>}
+                        {svc.location && <span>📍 {svc.location}</span>}
+                      </div>
+                      {role === "admin" && (
+                        <button
+                          className="danger-button"
+                          type="button"
+                          onClick={() => handleDeleteService(svc)}
+                          disabled={busy}
+                        >
+                          Apagar
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
