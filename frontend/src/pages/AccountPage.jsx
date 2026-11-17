@@ -68,7 +68,6 @@ export default function AccountPage() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [ownServices, setOwnServices] = useState([]);
-  const [ownOrders, setOwnOrders] = useState([]);
   const [categories, setCategories] = useState([]);
   const [role, setRole] = useState("user");
   const [profile, setProfile] = useState(null); // { user, provider }
@@ -114,24 +113,6 @@ export default function AccountPage() {
       });
     } catch (err) {
       console.error("Erro ao carregar perfil:", err);
-    }
-  }
-
-  async function loadOwnOrders(firebaseUser) {
-    if (!firebaseUser) {
-      setOwnOrders([]);
-      return;
-    }
-    try {
-      const token = await firebaseUser.getIdToken();
-      const res = await fetch(`${apiBase}/orders`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await readJson(res);
-      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao carregar pedidos"));
-      setOwnOrders(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Erro ao carregar pedidos:", err);
     }
   }
 
@@ -203,7 +184,6 @@ export default function AccountPage() {
       setDisplayName(currentUser?.displayName || "");
       setEmailVerified(Boolean(currentUser?.emailVerified));
       setAuthReady(true);
-      loadOwnOrders(currentUser);
       if (currentUser) {
         // Só carrega o perfil depois de garantir que o utilizador existe no Mongo.
         syncUser(currentUser, currentUser.displayName || "").then(() => loadProfile(currentUser));
@@ -514,9 +494,9 @@ export default function AccountPage() {
                 <button className="submit-button" type="button" onClick={() => document.getElementById("meus-servicos")?.scrollIntoView({ behavior: "smooth" })}>
                   Os meus serviços
                 </button>
-                <button className="submit-button" type="button" onClick={() => document.getElementById("servicos-pedidos")?.scrollIntoView({ behavior: "smooth" })}>
+                <a className="submit-button" href="/pedidos">
                   Serviços que pedi
-                </button>
+                </a>
               </div>
             </>
           ) : (
@@ -577,7 +557,7 @@ export default function AccountPage() {
               <span aria-hidden="true">→</span>
             </button>
 
-            {panel === null && (ownServices.length > 0 || ownOrders.length > 0) && (
+            {panel === null && ownServices.length > 0 && (
               <div className="services-section" id="meus-servicos">
                 {ownServices.length > 0 && (
                   <>
@@ -607,24 +587,6 @@ export default function AccountPage() {
                   </>
                 )}
 
-                {ownOrders.length > 0 && (
-                  <div id="servicos-pedidos">
-                    <h3>Serviços que já pedi <span className="column-count">{ownOrders.length}</span></h3>
-                    <ul className="service-list">
-                      {ownOrders.map((pedido) => (
-                        <li key={pedido._id} className="service-item order-item">
-                          <div>
-                            <strong>{pedido.servico?.titulo || "Serviço"}</strong>
-                            <span>{pedido.estado}</span>
-                            <span>📍 {pedido.servico?.zona}</span>
-                            <span>Data: {new Date(pedido.dataDesejada).toLocaleDateString("pt-PT")}</span>
-                          </div>
-                          <a className="card-link" href={`/pedidos/${pedido._id}`}>Ver</a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
             )}
 
