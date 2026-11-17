@@ -34,7 +34,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [services, setServices] = useState([]);
-  const [ownServices, setOwnServices] = useState[];
+  const [ownServices, setOwnServices] = useState([]);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileEmailSent, setProfileEmailSent] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -303,25 +303,33 @@ export default function App() {
               <p>Nenhum serviço ainda. <a href="#/" onClick={() => setMode("register")}>Criar um serviço</a></p>
             )}
 
-            {/* Minhas definições section - apenas quando não há serviços e não está em modo perfil */}
-            {ownServices.length === 0 && !showProfile ? (
-              <button className="submit-button" onClick={() => setShowProfile(true)} disabled={busy}>
-                {busy ? "A carregar…" : "Minhas definições"}
-              </button>
-            ) : null}
+            {/* Ações do utilizador logado */}
+            {!showProfile && mode !== 'create-service' && (
+              <>
+                <button className="submit-button" onClick={() => setMode('create-service')} disabled={busy}>
+                  {busy ? "A criar serviço…" : "Criar serviço"}
+                </button>
+                <button className="submit-button" onClick={() => setShowProfile(true)} disabled={busy}>
+                  {busy ? "A carregar…" : "Minhas definições"}
+                </button>
+              </>
+            )}
 
-            {/* Formulário de criar serviço aparece no modo create-service */}
-            {mode === 'create-service' && authReady && user ? (
-              <div>
+            {/* Formulário de criar serviço (um único local) */}
+            {mode === 'create-service' && (
+              <div className="settings-section">
                 <h3>Criar novo serviço</h3>
                 <p>Preenche o formulário abaixo para adicionar um novo serviço ao marketplace.</p>
                 <form onSubmit={(e) => {
                   e.preventDefault();
-                  const title = e.target.title.value;
                   fetch(`${apiBase}/services`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ title, description: e.target.description.value, location: e.target.location.value }),
+                    body: JSON.stringify({
+                      title: e.target.title.value,
+                      description: e.target.description.value,
+                      location: e.target.location.value,
+                    }),
                   }).then(() => {
                     alert("Serviço criado!");
                     setMode('register');
@@ -330,11 +338,44 @@ export default function App() {
                   <label>Título do serviço<input type="text" name="title" required /></label>
                   <label>Descrição<input type="text" name="description" placeholder="Descreve o serviço" /></label>
                   <label>Localização<input type="text" name="location" placeholder="Ex: Lisboa, Porto" /></label>
-                  <button type="submit">Guardar serviço</button>
-                  <button onClick={() => setMode('register')} type="button">Cancelar</button>
+                  <button className="submit-button" type="submit">Guardar serviço</button>
+                  <button className="submit-button" type="button" onClick={() => setMode('register')}>Cancelar</button>
                 </form>
               </div>
-            ) : null}
+            )}
+
+            {/* Minhas definições section */}
+            {showProfile && (
+              <div className="settings-section">
+                <h3>Minhas definições</h3>
+                <form onSubmit={handleProfileUpdate}>
+                  <div className="setting-row">
+                    <label>Nome</label>
+                    <input type="text" name="name" defaultValue={user.displayName || user.name || ''} required />
+                  </div>
+                  <div className="setting-row">
+                    <label>Email</label>
+                    <input type="email" name="email" defaultValue={user.email || ''} readOnly />
+                  </div>
+                  {user.emailVerified ? (
+                    <p>Email verificado ✓</p>
+                  ) : (
+                    <>
+                      <button className="submit-button" type="button" onClick={handleSendVerification} disabled={busy}>
+                        {busy ? "A enviar…" : "Enviar email de verificação"}
+                      </button>
+                      <p>{profileEmailSent ? 'Email enviado!' : ''}</p>
+                    </>
+                  )}
+                  <button className="submit-button" type="submit" disabled={busy}>
+                    {busy ? "A salvar…" : "Guardar alterações"}
+                  </button>
+                  <button className="submit-button" type="button" onClick={() => setShowProfile(false)} disabled={busy}>
+                    Cancelar
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
         ) : (
           <div className="form-panel">
@@ -389,31 +430,6 @@ export default function App() {
             <p className="terms">Ao continuar, aceitas os nossos <a href="#termos">Termos de utilização</a> e a <a href="#privacidade">Política de privacidade</a>.</p>
           </div>
         )}
-
-        {/* Section for creating a service */}
-        {mode === 'create-service' && authReady && user ? (
-          <div className="form-panel">
-            <h2>Criar novo serviço</h2>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const title = e.target.title.value;
-              fetch(`${apiBase}/services`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, description: e.target.description.value, location: e.target.location.value }),
-              }).then(() => {
-                alert("Serviço criado!");
-                setMode('register');
-              });
-            }}>
-              <label>Título do serviço<input type="text" name="title" required /></label>
-              <label>Descrição<input type="text" name="description" placeholder="Descreve o serviço" /></label>
-              <label>Localização<input type="text" name="location" placeholder="Ex: Lisboa, Porto" /></label>
-              <button type="submit">Guardar serviço</button>
-            </form>
-            <button onClick={() => setMode('register')} type="button">Cancelar</button>
-          </div>
-        ) : null}
       </section>
 
       <footer className="footer"><span>© 2026 ServiPerto</span><span>Feito para aproximar pessoas.</span></footer>
