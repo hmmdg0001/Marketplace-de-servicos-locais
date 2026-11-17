@@ -557,37 +557,10 @@ export default function AccountPage() {
               <span aria-hidden="true">→</span>
             </button>
 
-            {panel === null && ownServices.length > 0 && (
-              <div className="services-section" id="meus-servicos">
-                {ownServices.length > 0 && (
-                  <>
-                    <h3>Os meus serviços <span className="column-count">{ownServices.length}</span></h3>
-                    <ul className="service-list">
-                      {ownServices.map((svc) => (
-                        <li key={svc._id} className="service-item">
-                          <div>
-                            <strong>{svc.titulo || svc.title}</strong>
-                            {(svc.descricao || svc.description) && <span>{svc.descricao || svc.description}</span>}
-                            {(svc.zona || svc.location) && <span>📍 {svc.zona || svc.location}</span>}
-                            {(svc.preco > 0 || svc.price > 0) && (
-                              <span>Desde {Number(svc.preco || svc.price).toFixed(2).replace(".", ",")} €</span>
-                            )}
-                          </div>
-                          <button
-                            className="danger-button"
-                            type="button"
-                            onClick={() => handleDeleteService(svc)}
-                            disabled={busy}
-                          >
-                            Apagar
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-
-              </div>
+            {panel === null && (
+              <a className="submit-button" href="/servicos" style={{ maxWidth: 320, margin: "24px auto 0", display: "block", textAlign: "center" }}>
+                Ver os meus serviços
+              </a>
             )}
 
             {/* Botões de ação - só aparecem quando nenhum painel está aberto */}
