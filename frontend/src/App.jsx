@@ -34,7 +34,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [services, setServices] = useState([]);
-  const [ownServices, setOwnServices] = useState([]);
+  const [ownServices, setOwnServices] = useState[];
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileEmailSent, setProfileEmailSent] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -303,58 +303,38 @@ export default function App() {
               <p>Nenhum serviço ainda. <a href="#/" onClick={() => setMode("register")}>Criar um serviço</a></p>
             )}
 
-            {/* Botão para criar serviço */}
-            <button className="submit-button" onClick={() => setMode('create-service')} disabled={busy}>
-              {busy ? "A criar serviço…" : "Criar serviço"}
-            </button>
-
-            {/* Minhas definições section */}
-            {showProfile ? (
-              <div className="settings-section">
-                <h3>Minhas definições</h3>
-                
-                {/* Formulário de editar perfil */}
-                <form onSubmit={handleProfileUpdate}>
-                  <div className="setting-row">
-                    <label>Nome</label>
-                    <input type="text" name="name" value={user.name || ''} required />
-                  </div>
-                  <div className="setting-row">
-                    <label>Email</label>
-                    <input type="email" name="email" value={user.email || ''} readOnly />
-                  </div>
-                  
-                  {user.emailVerified ? (
-                    <p>Email verificado ✓</p>
-                  ) : (
-                    <>
-                      <button type="button" onClick={handleSendVerification} disabled={busy}>
-                        {busy ? "A enviar…" : "Enviar email de verificação"}
-                      </button>
-                      <p>{profileEmailSent ? 'Email enviado!' : ''}</p>
-                    </>
-                  )}
-
-                  <button type="submit" disabled={busy}>
-                    {busy ? "A salvar…" : "Guardar alterações"}
-                  </button>
-                  <button type="button" onClick={() => setShowProfile(false)} disabled={busy}>
-                    Cancelar
-                  </button>
-                </form>
-              </div>
-            ) : (
+            {/* Minhas definições section - apenas quando não há serviços e não está em modo perfil */}
+            {ownServices.length === 0 && !showProfile ? (
               <button className="submit-button" onClick={() => setShowProfile(true)} disabled={busy}>
                 {busy ? "A carregar…" : "Minhas definições"}
               </button>
-            )}
+            ) : null}
 
-            {/* Botão para criar serviço */}
-            {ownServices.length === 0 && !showProfile && (
-              <button className="submit-button" onClick={() => setMode('create-service')} disabled={busy}>
-                 {busy ? "A criar serviço…" : "Criar serviço"}
-               </button>
-            )}
+            {/* Formulário de criar serviço aparece no modo create-service */}
+            {mode === 'create-service' && authReady && user ? (
+              <div>
+                <h3>Criar novo serviço</h3>
+                <p>Preenche o formulário abaixo para adicionar um novo serviço ao marketplace.</p>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const title = e.target.title.value;
+                  fetch(`${apiBase}/services`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title, description: e.target.description.value, location: e.target.location.value }),
+                  }).then(() => {
+                    alert("Serviço criado!");
+                    setMode('register');
+                  });
+                }}>
+                  <label>Título do serviço<input type="text" name="title" required /></label>
+                  <label>Descrição<input type="text" name="description" placeholder="Descreve o serviço" /></label>
+                  <label>Localização<input type="text" name="location" placeholder="Ex: Lisboa, Porto" /></label>
+                  <button type="submit">Guardar serviço</button>
+                  <button onClick={() => setMode('register')} type="button">Cancelar</button>
+                </form>
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="form-panel">
