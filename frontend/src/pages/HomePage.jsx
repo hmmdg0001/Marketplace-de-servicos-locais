@@ -19,6 +19,12 @@ const SORT_OPTIONS = [
   { label: "Preço mais alto", value: "preco_desc" },
 ];
 
+const RATING_OPTIONS = [
+  { label: "Qualquer classificação", value: "" },
+  { label: "4 estrelas ou mais", value: "4" },
+  { label: "4,5 estrelas ou mais", value: "4.5" },
+];
+
 export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -26,6 +32,7 @@ export default function HomePage() {
   const zona = searchParams.get("zona") || "";
   const categoria = searchParams.get("categoria") || "";
   const precoMax = searchParams.get("precoMax") || "";
+  const avaliacaoMin = searchParams.get("avaliacaoMin") || "";
   const sort = searchParams.get("sort") || "";
   const page = Math.max(1, Number(searchParams.get("page") || 1));
 
@@ -50,6 +57,7 @@ export default function HomePage() {
     if (zona) params.set("zona", zona);
     if (categoria) params.set("categoria", categoria);
     if (precoMax) params.set("precoMax", precoMax);
+    if (avaliacaoMin) params.set("avaliacaoMin", avaliacaoMin);
     if (sort) params.set("sort", sort);
 
     let cancelado = false;
@@ -76,7 +84,7 @@ export default function HomePage() {
     return () => {
       cancelado = true;
     };
-  }, [q, zona, categoria, precoMax, sort, page]);
+  }, [q, zona, categoria, precoMax, avaliacaoMin, sort, page]);
 
   function atualizarParametros(novos) {
     const params = new URLSearchParams(searchParams);
@@ -159,6 +167,17 @@ export default function HomePage() {
           </select>
         </label>
         <label>
+          Classificação
+          <select
+            value={avaliacaoMin}
+            onChange={(event) => atualizarParametros({ avaliacaoMin: event.target.value, page: undefined })}
+          >
+            {RATING_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+        <label>
           Ordenar
           <select
             value={sort}
@@ -169,7 +188,7 @@ export default function HomePage() {
             ))}
           </select>
         </label>
-        {(q || zona || categoria || precoMax) && (
+        {(q || zona || categoria || precoMax || avaliacaoMin) && (
           <button
             type="button"
             className="link-button"

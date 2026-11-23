@@ -104,6 +104,26 @@ router.get('/', async (req, res) => {
       filter.preco = { $lte: numero(req.query.precoMax) };
     }
 
+    // Classificação mínima do prestador (avaliações verificadas).
+    if (req.query.avaliacaoMin !== undefined && req.query.avaliacaoMin !== '') {
+      const min = numero(req.query.avaliacaoMin, 0);
+      const perfis = await ProviderProfile.find({ mediaAvaliacoes: { $gte: min }, totalAvaliacoes: { $gt: 0 } })
+        .select('userId')
+        .lean();
+      const ids = perfis.map((p) => p.userId);
+
+      if (filter.prestadorId) {
+        const anterior = filter.prestadorId;
+        delete filter.prestadorId;
+        filter.$and = [
+          typeof anterior === 'string' ? { prestadorId: anterior } : anterior,
+          { prestadorId: { $in: ids } },
+        ];
+      } else {
+        filter.prestadorId = { $in: ids };
+      }
+    }
+
     const ordenacao = req.query.sort === 'preco_asc'
       ? { preco: 1 }
       : req.query.sort === 'preco_desc'
@@ -217,6 +237,9 @@ router.post('/', requireAuth, async (req, res) => {
     if (!titulo) return res.status(400).json({ error: 'Título obrigatório' });
     if (!zona) return res.status(400).json({ error: 'Localização obrigatória' });
     if (preco < 0) return res.status(400).json({ error: 'O preço não pode ser negativo' });
+    if (!Array.isArray(body.imagens) || body.imagens.length === 0) {
+      return res.status(400).json({ error: 'Adiciona pelo menos uma fotografia antes de publicar' });
+    }
 
     const categoria = await resolverCategoria(body.categoriaId ?? body.categoria);
     if ((body.categoriaId || body.categoria) && !categoria) {

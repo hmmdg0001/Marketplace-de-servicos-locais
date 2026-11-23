@@ -50,10 +50,31 @@ export default function ServiceForm({ user, categories, servico, onSaved, onCanc
     setValores((prev) => ({ ...prev, [nome]: valor }));
   }
 
+  const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
+  const TAMANHO_MAXIMO = 10 * 1024 * 1024; // 10 MB
+
   function escolherFicheiros(event) {
-    const ficheiros = Array.from(event.target.files || []).slice(0, MAX_IMAGENS - totalImagens);
-    const comPrevisao = ficheiros.map((file) => ({ file, preview: URL.createObjectURL(file) }));
-    setNovas((prev) => [...prev, ...comPrevisao]);
+    const escolhidos = Array.from(event.target.files || []);
+    const problemas = [];
+    const aceites = [];
+
+    for (const file of escolhidos) {
+      if (!TIPOS_PERMITIDOS.includes(file.type)) {
+        problemas.push(`${file.name}: usa JPG, PNG ou WEBP.`);
+      } else if (file.size > TAMANHO_MAXIMO) {
+        problemas.push(`${file.name}: o limite é 10 MB.`);
+      } else if (aceites.length + totalImagens < MAX_IMAGENS) {
+        aceites.push(file);
+      }
+    }
+
+    if (problemas.length) setErro(problemas.join(" "));
+    if (aceites.length) {
+      setNovas((prev) => [
+        ...prev,
+        ...aceites.map((file) => ({ file, preview: URL.createObjectURL(file) })),
+      ]);
+    }
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -77,6 +98,7 @@ export default function ServiceForm({ user, categories, servico, onSaved, onCanc
       formData.append("timestamp", config.timestamp.toString());
       formData.append("signature", config.signature);
       formData.append("folder", config.folder);
+      formData.append("allowed_formats", config.allowedFormats || config.allowed_formats);
       formData.append("resource_type", "image");
 
       const res = await fetch(urlUpload(config.cloudName), { method: "POST", body: formData });
@@ -92,6 +114,9 @@ export default function ServiceForm({ user, categories, servico, onSaved, onCanc
     setErro("");
     setBusy(true);
     try {
+      if (imagens.length + novas.length === 0) {
+        throw new Error("Adiciona pelo menos uma fotografia antes de publicar.");
+      }
       const enviadas = await enviarNovasImagens();
       const token = await user.getIdToken();
       const corpo = {
@@ -131,7 +156,7 @@ export default function ServiceForm({ user, categories, servico, onSaved, onCanc
           <input
             type="file"
             ref={inputRef}
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             multiple
             onChange={escolherFicheiros}
             style={{ display: "none" }}

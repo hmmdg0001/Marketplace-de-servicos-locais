@@ -11,11 +11,12 @@ router.post('/assinatura', requireAuth, async (req, res) => {
     const timestamp = Math.floor(Date.now() / 1000);
     const folder = `serviperto/${pasta}/${req.user.uid}`;
 
-    // O Cloudinary não assina resource_type (vai no URL /image/upload),
-    // por isso só entram na assinatura os parâmetros que seguem no corpo.
+    // O Cloudinary não assina resource_type (vai no URL /image/upload).
+    // allowed_formats tem de entrar na assinatura e no FormData.
     const paramsToSign = {
       timestamp,
       folder,
+      allowed_formats: 'jpg,png,webp',
     };
 
     const signature = cloudinary.utils.api_sign_request(paramsToSign, cloudinary.config().api_secret);
@@ -26,6 +27,7 @@ router.post('/assinatura', requireAuth, async (req, res) => {
       timestamp,
       signature,
       folder,
+      allowed_formats: paramsToSign.allowed_formats,
     });
   } catch (error) {
     console.error('Erro ao gerar assinatura Cloudinary:', error.message);
