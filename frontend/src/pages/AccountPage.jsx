@@ -311,6 +311,29 @@ export default function AccountPage() {
     }
   }
 
+  async function handleDeleteAccount() {
+    const confirmacao = window.confirm(
+      "Queres mesmo apagar a tua conta e todos os teus dados? Esta ação não se pode anular."
+    );
+    if (!confirmacao) return;
+
+    setBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${apiBase}/profile`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao eliminar a conta"));
+      await signOut(auth);
+      window.location.href = "/";
+    } catch (err) {
+      notify(err.message || "Erro ao eliminar a conta.", "error");
+      setBusy(false);
+    }
+  }
+
   return (
       <section className="auth-layout" id="inicio">
         <div className={`intro-panel ${authReady && user ? "intro-panel-account" : ""}`}>
@@ -497,6 +520,13 @@ export default function AccountPage() {
                     Voltar
                   </button>
                 </form>
+
+                <div className="account-danger-zone">
+                  <p>Apaga a tua conta, serviços, pedidos e avaliações. Não se pode anular.</p>
+                  <button className="submit-button" type="button" onClick={handleDeleteAccount} disabled={busy}>
+                    Eliminar a minha conta
+                  </button>
+                </div>
               </div>
             )}
 

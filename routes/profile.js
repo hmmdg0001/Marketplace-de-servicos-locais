@@ -5,6 +5,8 @@ const User = require('../models/user');
 const ProviderProfile = require('../models/providerProfile');
 const Service = require('../models/service');
 const Review = require('../models/review');
+const Order = require('../models/order');
+const Message = require('../models/message');
 
 // Junta os dados do utilizador com o perfil de prestador (se existir)
 // e com as estatísticas que aparecem na conta.
@@ -166,6 +168,56 @@ router.put('/', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Erro ao atualizar perfil:', error.message);
     res.status(500).json({ error: 'Erro ao atualizar perfil' });
+  }
+});
+
+// DELETE /api/profile - Elimina a conta e todos os dados pessoais do utilizador.
+router.delete('/', requireAuth, async (req, res) => {
+  try {
+    const uid = req.user.uid;
+
+    const pedidos = await Order.find({ $or: [{ clienteId: uid }, { prestadorId: uid }] })
+      .select('_id')
+      .lean();
+    const pedidoIds = pedidos.map((pedido) => pedido._id);
+
+    await Promise.all([
+      Review.deleteMany({ $or: [{ clienteId: uid }, { prestadorId: uid }] }),
+      Message.deleteMany({ pedidoId: { $in: pedidoIds } }),
+      Order.deleteMany({ _id: { $in: pedidoIds } }),
+      Service.deleteMany({ prestadorId: uid }),
+      ProviderProfile.deleteOne({ userId: uid }),
+    ]);
+
+    // As avaliações deste cliente podem ter mudado a média de outros prestadores.
+    const estatisticas = await Review.aggregate([
+      { $group: { _id: '$prestadorId', media: { $avg: '$classificacao' }, total: { $sum: 1 } } },
+    ]);
+    const porPrestador = new Map(estatisticas.map((e) => [e._id, e]));
+    const perfis = await ProviderProfile.find({}).select('userId').lean();
+
+    for (const perfil of perfis) {
+      const estatistica = porPrestador.get(perfil.userId);
+      await ProviderProfile.updateOne(
+        { userId: perfil.userId },
+        {
+          $set: {
+            mediaAvaliacoes: estatistica ? Math.round(estatistica.media * 10) / 10 : 0,
+            totalAvaliacoes: estatistica ? estatistica.total : 0,
+          },
+        }
+      );
+    }
+
+    await User.deleteOne({ uid });
+    await admin.auth().deleteUser(uid).catch((erro) => {
+      console.error('Erro ao apagar utilizador no Firebase:', erro.message);
+    });
+
+    res.json({ message: 'Conta e dados pessoais eliminados' });
+  } catch (error) {
+    console.error('Erro ao eliminar conta:', error.message);
+    res.status(500).json({ error: 'Erro ao eliminar a conta' });
   }
 });
 
