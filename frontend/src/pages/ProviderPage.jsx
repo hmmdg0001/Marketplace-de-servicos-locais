@@ -63,6 +63,7 @@ export default function ProviderPage() {
   const zona = provider?.zona || user.cidade;
   const nota = Number(provider?.mediaAvaliacoes || 0);
   const totalAvaliacoes = Number(provider?.totalAvaliacoes || 0);
+  const rotuloAvaliacoes = totalAvaliacoes === 1 ? "avaliação" : "avaliações";
 
   return (
     <section className="catalog-page">
@@ -72,7 +73,9 @@ export default function ProviderPage() {
         <h1>{nome}</h1>
         <p className="catalog-subtitle">
           {zona ? `📍 ${zona} · ` : ""}
-          {totalAvaliacoes > 0 ? `${nota.toFixed(1)}/5 (${totalAvaliacoes} avaliações)` : "Ainda sem avaliações"}
+          {totalAvaliacoes > 0
+            ? `${nota.toFixed(1)}/5 (${totalAvaliacoes} ${rotuloAvaliacoes})`
+            : "Ainda sem avaliações"}
         </p>
         {provider?.bio && <p className="provider-bio">{provider.bio}</p>}
         <p className="provider-desde">Na ServiPerto desde {formatDate(user.criadoEm) || "data desconhecida"}</p>
@@ -109,7 +112,7 @@ export default function ProviderPage() {
       <div className="reviews-section">
         <div className="reviews-head">
           <h2>Avaliações recebidas</h2>
-          <span>{totalAvaliacoes} no total</span>
+          <span>{totalAvaliacoes} {rotuloAvaliacoes} no total</span>
         </div>
         {avaliacoes.length === 0 ? (
           <p className="catalog-empty">Ainda sem avaliações. As avaliações aparecem quando um pedido é concluído.</p>

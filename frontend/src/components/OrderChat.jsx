@@ -64,7 +64,7 @@ export default function OrderChat({ orderId, user }) {
     <div className="order-chat">
       <div className="reviews-head">
         <h2>Conversa sobre o pedido</h2>
-        <span>{mensagens.length} mensagem(ns)</span>
+        <span>{mensagens.length} {mensagens.length === 1 ? "mensagem" : "mensagens"}</span>
       </div>
 
       <div className="chat-messages" ref={listaRef}>
