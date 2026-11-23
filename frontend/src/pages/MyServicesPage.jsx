@@ -83,6 +83,28 @@ export default function MyServicesPage() {
     }
   }
 
+  async function handleToggleAtivo(service) {
+    setBusy(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${apiBase}/services/${service._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ativo: !service.ativo }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao alterar o serviço"));
+      setServices((prev) =>
+        prev.map((s) => (s._id === service._id ? { ...s, ativo: data.ativo } : s))
+      );
+      setNotice({ text: service.ativo ? "Serviço desativado." : "Serviço ativado.", kind: "success" });
+    } catch (err) {
+      setNotice({ text: err.message || "Erro ao alterar o serviço.", kind: "error" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function handleSaved(servico) {
     const editado = Boolean(formulario?.servico);
     const completo = {
@@ -165,6 +187,7 @@ export default function MyServicesPage() {
               )}
               <div>
                 <strong>{svc.titulo || svc.title}</strong>
+                {svc.ativo === false && <span>Serviço desativado</span>}
                 {(svc.categoria?.nome) && <span>{svc.categoria.nome}</span>}
                 {(svc.descricao || svc.description) && <span>{svc.descricao || svc.description}</span>}
                 {(svc.zona || svc.location) && <span>📍 {svc.zona || svc.location}</span>}
@@ -172,6 +195,14 @@ export default function MyServicesPage() {
               </div>
             </div>
             <div className="service-item-actions">
+              <button
+                className="submit-button compact-button"
+                type="button"
+                onClick={() => handleToggleAtivo(svc)}
+                disabled={busy}
+              >
+                {svc.ativo === false ? "Ativar" : "Desativar"}
+              </button>
               <button
                 className="submit-button compact-button"
                 type="button"
