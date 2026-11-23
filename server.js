@@ -21,6 +21,7 @@ app.use(express.json());
   app.use('/api/services', require('./routes/services'));
   app.use('/api/orders', require('./routes/orders'));
   app.use('/api/upload', require('./routes/upload'));
+  app.use('/api/admin', require('./routes/admin'));
 
   // Rota raiz
   app.get('/', (req, res) => {

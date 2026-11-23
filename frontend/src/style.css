@@ -119,7 +119,28 @@ form select:invalid{color:#b0b4ad}
 .chat-bubble p{font-size:12px;line-height:1.6;color:#3d4a3f;margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
 .chat-form{display:flex;align-items:center;gap:8px;margin-top:10px}
 .chat-form input{flex:1;min-width:0;padding:11px 12px;border:1px solid #dfe2d8;border-radius:4px;font:inherit;font-size:12px;background:#fffefa;color:#293a2e}
-.chat-form input:focus{outline:none;border-color:#81916b}
+.admin-tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 22px}
+.admin-tabs .submit-button,.admin-linha .submit-button{width:auto;height:auto;margin:0;padding:9px 14px;font-size:10px}
+.admin-novo{max-width:240px;margin:0 auto 14px!important}
+.admin-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.admin-card{border:1px solid #e7e8e1;background:#fafaf6;border-radius:6px;padding:18px 14px;text-align:center}
+.admin-card strong{display:block;font:700 26px Manrope,sans-serif;color:#28563e}
+.admin-card span{font-size:10px;color:#8a9086;line-height:1.5;display:block;margin-top:4px}
+.admin-card-wide{grid-column:1/-1}
+.admin-lista{max-width:900px;margin:0 auto}
+.admin-linha{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid #e7e8e1;background:#fffefa;border-radius:5px;padding:12px 14px;margin-bottom:8px}
+.admin-linha-main{min-width:0;flex:1}
+.admin-linha-main strong{display:block;font-size:12px;color:#2f4436;overflow-wrap:anywhere}
+.admin-linha-main small{display:block;font-size:10px;color:#82887f;margin-top:3px;line-height:1.5}
+.admin-linha-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.admin-badge{font-size:9px;font-weight:700;padding:4px 8px;border-radius:20px;background:#edf1e7;color:#4b6647}
+.admin-badge.off{background:#f6e9e6;color:#8d3f35}
+.admin-form{max-width:520px;margin:0 auto 18px;background:#fafaf6}
+.admin-form h3{font:700 15px Manrope,sans-serif;color:#293a2e;margin:0 0 14px}
+.admin-form label{display:block;font-size:10px;color:#7d857b;margin-bottom:10px}
+.admin-form label input{display:block;margin-top:4px;width:100%;padding:9px 10px;border:1px solid #dfe2d8;border-radius:4px;font:inherit;font-size:12px}
+.admin-form label.admin-check{display:flex;align-items:center;gap:8px}
+.admin-form label.admin-check input{width:auto;margin:0}
 @media(max-width:900px){.catalog-grid{grid-template-columns:repeat(2,1fr)}.service-detail{grid-template-columns:1fr}.catalog-search select{width:160px}}
 @media(max-width:680px){.catalog-grid{grid-template-columns:1fr}.catalog-search{flex-direction:column}.catalog-search select{width:100%}.catalog-search .submit-button{width:100%}.topbar-nav{gap:14px;font-size:10px}}
 

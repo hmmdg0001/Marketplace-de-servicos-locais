@@ -326,6 +326,11 @@ export default function AccountPage() {
                 <a className="submit-button" href="/pedidos">
                   Serviços que pedi
                 </a>
+                {role === "admin" && (
+                  <a className="submit-button" href="/admin">
+                    Painel de administração
+                  </a>
+                )}
               </div>
             </>
           ) : (
