@@ -119,7 +119,7 @@ async function seedServices(categoryMap, admin) {
         preco: service.preco,
         zona: isAdmin ? 'Fafe' : providerZones.get(service.prestador) || '',
         ativo: true,
-        imagens: imagensCatalogo[service.chave] ? [imagensCatalogo[service.chave].url] : [],
+        imagens: imagensCatalogo[service.imagemChave || service.chave] ? [imagensCatalogo[service.imagemChave || service.chave].url] : [],
         isSeed: true,
       };
     })
