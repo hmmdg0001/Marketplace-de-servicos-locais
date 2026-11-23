@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase.js";
 import { apiBase, readJson, apiErrorMessage, formatPrice } from "../lib/api.js";
-import { PORTUGAL_CITIES } from "../data/cities.js";
+import ServiceForm from "../components/ServiceForm.jsx";
 
 export default function MyServicesPage() {
   const [user, setUser] = useState(null);
@@ -13,7 +13,7 @@ export default function MyServicesPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState({ text: "", kind: "success" });
-  const [showCreate, setShowCreate] = useState(false);
+  const [formulario, setFormulario] = useState(null); // null | { servico: null | object }
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -39,30 +39,27 @@ export default function MyServicesPage() {
     setLoading(true);
     setError("");
 
-    const timer = setTimeout(() => {
-      user.getIdToken()
-        .then((token) =>
-          fetch(`${apiBase}/services?userId=${user.uid}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-        )
-        .then(readJson)
-        .then((data) => {
-          if (cancelado) return;
-          if (data.error) setError(data.error);
-          else setServices(Array.isArray(data) ? data : []);
+    user.getIdToken()
+      .then((token) =>
+        fetch(`${apiBase}/services?userId=${user.uid}`, {
+          headers: { Authorization: `Bearer ${token}` },
         })
-        .catch(() => {
-          if (!cancelado) setError("Não foi possível carregar os serviços.");
-        })
-        .finally(() => {
-          if (!cancelado) setLoading(false);
-        });
-    }, 300);
+      )
+      .then(readJson)
+      .then((data) => {
+        if (cancelado) return;
+        if (data.error) setError(data.error);
+        else setServices(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelado) setError("Não foi possível carregar os serviços.");
+      })
+      .finally(() => {
+        if (!cancelado) setLoading(false);
+      });
 
     return () => {
       cancelado = true;
-      clearTimeout(timer);
     };
   }, [user]);
 
@@ -84,6 +81,19 @@ export default function MyServicesPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function handleSaved(servico) {
+    const editado = Boolean(formulario?.servico);
+    const completo = {
+      ...servico,
+      categoria: servico.categoria || categories.find((c) => c._id === servico.categoriaId),
+    };
+    setServices((prev) =>
+      editado ? prev.map((s) => (s._id === servico._id ? completo : s)) : [completo, ...prev]
+    );
+    setFormulario(null);
+    setNotice({ text: editado ? "Serviço atualizado." : "Serviço criado com sucesso!", kind: "success" });
   }
 
   if (!authReady) {
@@ -109,70 +119,30 @@ export default function MyServicesPage() {
         <p className="kicker">Os meus serviços</p>
         <h1>Os meus serviços</h1>
         <p className="catalog-subtitle">Gere os serviços que publicaste na plataforma.</p>
-        <button className="submit-button" type="button" onClick={() => setShowCreate(!showCreate)} disabled={busy}>
-          {showCreate ? "Cancelar" : "Criar novo serviço"}
+        <button
+          className="submit-button"
+          type="button"
+          onClick={() => {
+            setFormulario(formulario ? null : { servico: null });
+            setNotice({ text: "", kind: "success" });
+          }}
+          disabled={busy}
+        >
+          {formulario && !formulario.servico ? "Cancelar" : "Criar novo serviço"}
         </button>
       </div>
 
       {notice.text && <p className={`form-message ${notice.kind}`} role="status">{notice.text}</p>}
 
-      {showCreate && (
-        <div className="settings-section" style={{ maxWidth: 600, margin: "0 auto 24px" }}>
-          <h3>Criar novo serviço</h3>
-          <form onSubmit={async (e) => {
-            e.preventDefault();
-            setBusy(true);
-            try {
-              const token = await user.getIdToken();
-              const res = await fetch(`${apiBase}/services`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({
-                  titulo: e.target.title.value,
-                  descricao: e.target.description.value,
-                  categoriaId: e.target.categoria.value,
-                  preco: Number(e.target.preco.value || 0),
-                  zona: e.target.location.value,
-                }),
-              });
-              const data = await readJson(res);
-              if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao criar serviço"));
-              setServices((prev) => [data, ...prev]);
-              setNotice({ text: "Serviço criado com sucesso!", kind: "success" });
-              setShowCreate(false);
-            } catch (err) {
-              setNotice({ text: err.message || "Erro ao criar serviço.", kind: "error" });
-            } finally {
-              setBusy(false);
-            }
-          }}>
-            <label>Título do serviço<input type="text" name="title" required /></label>
-            <label>Descrição<input type="text" name="description" placeholder="Descreve o serviço" /></label>
-            <label>
-              Categoria
-              <select name="categoria" defaultValue="" required>
-                <option value="" disabled>Escolhe a categoria</option>
-                {categories.map((c) => (
-                  <option key={c._id} value={c._id}>{c.icone} {c.nome}</option>
-                ))}
-              </select>
-            </label>
-            <label>Preço (€)<input type="number" name="preco" min="0" step="0.01" placeholder="Ex: 29.90" required /></label>
-            <label>
-              Localização
-              <select name="location" defaultValue="" required>
-                <option value="" disabled>Escolhe a tua cidade</option>
-                {PORTUGAL_CITIES.map((group) => (
-                  <optgroup key={group.district} label={group.district}>
-                    {group.cities.map((city) => (
-                      <option key={city} value={city}>{city}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </label>
-            <button className="submit-button" type="submit" disabled={busy}>{busy ? "A guardar…" : "Guardar serviço"}</button>
-          </form>
+      {formulario && (
+        <div style={{ maxWidth: 600, margin: "0 auto 24px" }}>
+          <ServiceForm
+            user={user}
+            categories={categories}
+            servico={formulario.servico}
+            onSaved={handleSaved}
+            onCancel={() => setFormulario(null)}
+          />
         </div>
       )}
 
@@ -189,17 +159,35 @@ export default function MyServicesPage() {
       <ul className="service-list" style={{ maxWidth: 780, margin: "0 auto" }}>
         {services.map((svc) => (
           <li key={svc._id} className="service-item">
-            <div>
-              <strong>{svc.titulo || svc.title}</strong>
-              {(svc.descricao || svc.description) && <span>{svc.descricao || svc.description}</span>}
-              {(svc.zona || svc.location) && <span>📍 {svc.zona || svc.location}</span>}
-              {(svc.preco > 0 || svc.price > 0) && (
-                <span>Desde {Number(svc.preco || svc.price).toFixed(2).replace(".", ",")} €</span>
+            <div className="service-item-info">
+              {svc.imagens?.[0] && (
+                <img className="service-item-thumb" src={svc.imagens[0]} alt="" loading="lazy" />
               )}
+              <div>
+                <strong>{svc.titulo || svc.title}</strong>
+                {(svc.categoria?.nome) && <span>{svc.categoria.nome}</span>}
+                {(svc.descricao || svc.description) && <span>{svc.descricao || svc.description}</span>}
+                {(svc.zona || svc.location) && <span>📍 {svc.zona || svc.location}</span>}
+                {(svc.preco > 0 || svc.price > 0) && <span>{formatPrice(svc.preco || svc.price)}</span>}
+              </div>
             </div>
-            <button className="danger-button" type="button" onClick={() => handleDelete(svc)} disabled={busy}>
-              Apagar
-            </button>
+            <div className="service-item-actions">
+              <button
+                className="submit-button compact-button"
+                type="button"
+                onClick={() => {
+                  setFormulario({ servico: svc });
+                  setNotice({ text: "", kind: "success" });
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                disabled={busy}
+              >
+                Editar
+              </button>
+              <button className="danger-button" type="button" onClick={() => handleDelete(svc)} disabled={busy}>
+                Apagar
+              </button>
+            </div>
           </li>
         ))}
       </ul>
