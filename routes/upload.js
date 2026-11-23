@@ -11,10 +11,11 @@ router.post('/assinatura', requireAuth, async (req, res) => {
     const timestamp = Math.floor(Date.now() / 1000);
     const folder = `serviperto/${pasta}/${req.user.uid}`;
 
+    // O Cloudinary não assina resource_type (vai no URL /image/upload),
+    // por isso só entram na assinatura os parâmetros que seguem no corpo.
     const paramsToSign = {
       timestamp,
       folder,
-      resource_type: 'image',
     };
 
     const signature = cloudinary.utils.api_sign_request(paramsToSign, cloudinary.config().api_secret);
