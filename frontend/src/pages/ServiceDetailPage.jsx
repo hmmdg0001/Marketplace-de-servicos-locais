@@ -145,7 +145,10 @@ export default function ServiceDetailPage() {
           <p className="catalog-card-category">{service.categoria?.nome}</p>
           <h1>{service.titulo}</h1>
           <p className="service-detail-provider">
-            Prestador: <strong>{service.prestador?.nome}</strong>
+            Prestador:{" "}
+            <Link to={`/prestador/${service.prestador?.uid || ""}`}>
+              <strong>{service.prestador?.nome}</strong>
+            </Link>
             {" · "}
             📍 {service.zona || service.prestador?.zona}
           </p>
@@ -227,6 +230,9 @@ export default function ServiceDetailPage() {
             {service.prestador.nome} · {service.prestador.zona}
             {totalAvaliacoes > 0 ? ` · ${media.toFixed(1)}/5` : ""}
           </p>
+          <Link className="provider-card-link" to={`/prestador/${service.prestador?.uid || ""}`}>
+            Ver perfil completo →
+          </Link>
         </div>
       )}
 

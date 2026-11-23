@@ -103,6 +103,13 @@ form select:invalid{color:#b0b4ad}
 .provider-card h3{font:700 14px Manrope,sans-serif;color:#293a2e;margin:0 0 8px}
 .provider-card p{font-size:12px;line-height:1.6;color:#5c675c;margin:0 0 8px}
 .provider-card-meta{font-size:10px;color:#8a9086}
+.provider-avatar{width:72px;height:72px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:#e7eddd;color:#31563e;font:700 30px Manrope,sans-serif}
+.provider-bio{max-width:620px;margin:16px auto 0;font-size:13px;line-height:1.7;color:#4d584e}
+.provider-desde{margin:10px 0 0;font-size:10px;color:#9aa096}
+.provider-section-title{font:700 17px Manrope,sans-serif;color:#293a2e;margin:26px 0 14px}
+.service-detail-provider a,.order-card-people a{color:#28563e;text-decoration:none;border-bottom:1px dashed #b9c5ad}
+.service-detail-provider a:hover,.order-card-people a:hover{border-bottom-style:solid}
+.provider-card-link{display:inline-block;margin-top:10px;font-size:11px;font-weight:700;color:#28563e;text-decoration:none;border-bottom:1px dashed #b9c5ad}
 @media(max-width:900px){.catalog-grid{grid-template-columns:repeat(2,1fr)}.service-detail{grid-template-columns:1fr}.catalog-search select{width:160px}}
 @media(max-width:680px){.catalog-grid{grid-template-columns:1fr}.catalog-search{flex-direction:column}.catalog-search select{width:100%}.catalog-search .submit-button{width:100%}.topbar-nav{gap:14px;font-size:10px}}
 

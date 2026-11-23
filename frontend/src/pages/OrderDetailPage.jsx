@@ -217,7 +217,10 @@ export default function OrderDetailPage() {
           <p className="order-card-people">
             Cliente: <strong>{pedido.cliente?.nome}</strong>
             <span aria-hidden="true"> · </span>
-            Prestador: <strong>{pedido.prestador?.nome}</strong>
+            Prestador:{" "}
+            <Link to={`/prestador/${pedido.prestador?.uid || ""}`}>
+              <strong>{pedido.prestador?.nome}</strong>
+            </Link>
           </p>
 
           <dl className="order-facts">
