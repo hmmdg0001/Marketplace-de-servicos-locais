@@ -67,7 +67,6 @@ export default function AccountPage() {
   const [displayName, setDisplayName] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
   const [authReady, setAuthReady] = useState(false);
-  const [ownServices, setOwnServices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [role, setRole] = useState("user");
   const [profile, setProfile] = useState(null); // { user, provider }
@@ -420,7 +419,6 @@ export default function AccountPage() {
       const data = await readJson(res);
       if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao criar serviço"));
 
-      setOwnServices((prev) => [data, ...prev]);
       notify("Serviço criado com sucesso!");
       setPanel(null);
       setServiceImages([]);
@@ -432,55 +430,11 @@ export default function AccountPage() {
     }
   }
 
-  async function handleDeleteService(service) {
-    const confirmed = window.confirm(`Queres apagar o serviço "${service.titulo || service.title}"?`);
-    if (!confirmed) return;
-
-    notify("");
-    setBusy(true);
-    try {
-      const token = await user.getIdToken();
-      const res = await fetch(`${apiBase}/services/${service._id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await readJson(res);
-      if (!res.ok) throw new Error(apiErrorMessage(res, data, "Erro ao apagar serviço"));
-
-      setOwnServices((prev) => prev.filter((svc) => svc._id !== service._id));
-      notify("Serviço apagado.");
-    } catch (error) {
-      notify(error.message || "Erro ao apagar serviço.", "error");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   useEffect(() => {
     if (panel === "create" && user && !cloudinaryConfig) {
       fetchCloudinaryConfig();
     }
   }, [panel, user, cloudinaryConfig]);
-
-  useEffect(() => {
-    if (!user) {
-      setOwnServices([]);
-      return;
-    }
-    const uid = user.uid;
-    // Pequeno atraso para garantir que o backend está pronto a responder.
-    const timer = setTimeout(() => {
-      fetch("/api/services?userId=" + uid)
-        .then((res) => res.json())
-        .then((data) => {
-          setOwnServices(Array.isArray(data) ? data : []);
-        })
-        .catch((err) => {
-          console.error("Erro ao carregar serviços:", err);
-        });
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [user]);
 
   return (
       <section className="auth-layout" id="inicio">
