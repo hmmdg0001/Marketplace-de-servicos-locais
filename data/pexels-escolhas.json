@@ -1,0 +1,278 @@
+{
+  "limpeza-casa": {
+    "id": "6195119",
+    "consulta": "house cleaning service"
+  },
+  "limpeza-profunda": {
+    "id": "3785706",
+    "consulta": "woman cleaning kitchen gloves"
+  },
+  "limpeza-sofas": {
+    "id": "4401538",
+    "consulta": "sofa cleaning"
+  },
+  "higienizacao-colchoes": {
+    "id": "14675103",
+    "consulta": "mattress cleaning"
+  },
+  "limpeza-tapetes": {
+    "id": "4107278",
+    "consulta": "carpet cleaning"
+  },
+  "limpeza-pos-obra": {
+    "id": "6196694",
+    "consulta": "construction debris cleanup"
+  },
+  "fugas-agua": {
+    "id": "15206136",
+    "consulta": "leaking pipe plumber"
+  },
+  "desentupimento": {
+    "id": "33388390",
+    "consulta": "plumber unclogging sink"
+  },
+  "esquentadores": {
+    "id": "35290675",
+    "consulta": "water heater repair"
+  },
+  "maquinas-lavar": {
+    "id": "31725399",
+    "consulta": "washing machine repair"
+  },
+  "estores": {
+    "id": "13005096",
+    "consulta": "window blinds"
+  },
+  "quadro-eletrico": {
+    "id": "33694016",
+    "consulta": "fuse box electrician"
+  },
+  "roupeiro": {
+    "id": "7587809",
+    "consulta": "wardrobe furniture"
+  },
+  "cama": {
+    "id": "7491193",
+    "consulta": "bed frame assembly"
+  },
+  "secretaria": {
+    "id": "9300768",
+    "consulta": "office desk furniture"
+  },
+  "cozinha-modular": {
+    "id": "4030055",
+    "consulta": "kitchen cabinets"
+  },
+  "parque-infantil": {
+    "id": "4005325",
+    "consulta": "children playground"
+  },
+  "manicure": {
+    "id": "3738377",
+    "consulta": "manicure nails"
+  },
+  "pedicure": {
+    "id": "5793888",
+    "consulta": "pedicure feet spa"
+  },
+  "corte-cabelo": {
+    "id": "30294767",
+    "consulta": "hairdresser scissors"
+  },
+  "maquilhagem": {
+    "id": "5149734",
+    "consulta": "makeup artist"
+  },
+  "massagem": {
+    "id": "7233264",
+    "consulta": "massage therapy"
+  },
+  "lavagem-carro": {
+    "id": "5693660",
+    "consulta": "pressure washing car"
+  },
+  "lavagem-completa": {
+    "id": "17029940",
+    "consulta": "car detailing"
+  },
+  "interior-carro": {
+    "id": "5233264",
+    "consulta": "car vacuum cleaning"
+  },
+  "farois": {
+    "id": "33695403",
+    "consulta": "car headlight"
+  },
+  "escovas": {
+    "id": "8586715",
+    "consulta": "windshield wipers"
+  },
+  "pintura-interior": {
+    "id": "5583126",
+    "consulta": "painting wall roller"
+  },
+  "pintura-exterior": {
+    "id": "6764282",
+    "consulta": "house painting facade"
+  },
+  "papel-parede": {
+    "id": "4981812",
+    "consulta": "wallpaper installation"
+  },
+  "prateleiras": {
+    "id": "4503819",
+    "consulta": "wall shelves"
+  },
+  "vinil": {
+    "id": "6925113",
+    "consulta": "wall decal sticker"
+  },
+  "corte-relva": {
+    "id": "3999647",
+    "consulta": "lawn mower"
+  },
+  "manutencao-jardim": {
+    "id": "38673906",
+    "consulta": "gardener planting flowers"
+  },
+  "poda-arvores": {
+    "id": "4206115",
+    "consulta": "man cutting tree branches chainsaw"
+  },
+  "sebes": {
+    "id": "39590851",
+    "consulta": "hedge garden"
+  },
+  "sistema-rega": {
+    "id": "23408532",
+    "consulta": "irrigation sprinkler"
+  },
+  "ar-condicionado": {
+    "id": "7347538",
+    "consulta": "air conditioner installation"
+  },
+  "torneiras": {
+    "id": "10833563",
+    "consulta": "faucet installation"
+  },
+  "maquina-lavar-instalacao": {
+    "id": "8146329",
+    "consulta": "washing machine plumbing"
+  },
+  "tv-parede": {
+    "id": "6020432",
+    "consulta": "tv wall mount"
+  },
+  "videoporteiro": {
+    "id": "12508073",
+    "consulta": "door intercom"
+  },
+  "lavar-passar": {
+    "id": "45980",
+    "consulta": "stack of clean towels"
+  },
+  "cortinados": {
+    "id": "14281158",
+    "consulta": "curtains window"
+  },
+  "casacos": {
+    "id": "8774650",
+    "consulta": "dry cleaning clothes"
+  },
+  "engomadoria": {
+    "id": "6045788",
+    "consulta": "ironing clothes"
+  },
+  "edredoens": {
+    "id": "6903157",
+    "consulta": "bed duvet"
+  },
+  "manutencao-ac": {
+    "id": "6471913",
+    "consulta": "hvac technician"
+  },
+  "caldeira": {
+    "id": "7937300",
+    "consulta": "boiler heating"
+  },
+  "revisao-eletrica": {
+    "id": "5691642",
+    "consulta": "electrician wiring"
+  },
+  "piscina": {
+    "id": "8028684",
+    "consulta": "swimming pool cleaning"
+  },
+  "paineis-solares": {
+    "id": "12606669",
+    "consulta": "solar panels"
+  },
+  "mudanca-casa": {
+    "id": "4554249",
+    "consulta": "moving boxes home"
+  },
+  "mudanca-escritorio": {
+    "id": "7217856",
+    "consulta": "office moving"
+  },
+  "transporte-moveis": {
+    "id": "7217839",
+    "consulta": "moving furniture"
+  },
+  "desmontagem": {
+    "id": "5805491",
+    "consulta": "furniture assembly"
+  },
+  "carrinha-motorista": {
+    "id": "6169129",
+    "consulta": "delivery van driver"
+  },
+  "baratas": {
+    "id": "4176228",
+    "consulta": "exterminator spraying"
+  },
+  "formigas": {
+    "id": "37273378",
+    "consulta": "ant pest"
+  },
+  "pulgas": {
+    "id": "39564718",
+    "consulta": "pest control worker"
+  },
+  "vespas": {
+    "id": "11354731",
+    "consulta": "bee hive nest"
+  },
+  "desratizacao": {
+    "id": "31370717",
+    "consulta": "pest control rat"
+  },
+  "terraco": {
+    "id": "36884223",
+    "consulta": "terrace roof waterproofing"
+  },
+  "humidade": {
+    "id": "6141203",
+    "consulta": "damp wall"
+  },
+  "bolor": {
+    "id": "3615725",
+    "consulta": "mold removal wall"
+  },
+  "casa-banho": {
+    "id": "6957081",
+    "consulta": "bathroom renovation"
+  },
+  "telhado": {
+    "id": "237907",
+    "consulta": "roof tiles"
+  },
+  "admin-reparacoes": {
+    "id": "5484718",
+    "consulta": "handyman tools"
+  },
+  "admin-montagem": {
+    "id": "4554427",
+    "consulta": "assembling furniture"
+  }
+}

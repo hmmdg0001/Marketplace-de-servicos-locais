@@ -198,7 +198,11 @@ export default function HomePage() {
         {resultado.items.map((service) => (
           <li key={service._id} className="catalog-card">
             <div className="catalog-card-image" aria-hidden="true">
-              {service.categoria?.icone || "✳"}
+              {service.imagens?.[0] ? (
+                <img src={service.imagens[0]} alt="" loading="lazy" />
+              ) : (
+                service.categoria?.icone || "✳"
+              )}
             </div>
             <div className="catalog-card-body">
               <p className="catalog-card-category">{service.categoria?.nome || "Serviço"}</p>

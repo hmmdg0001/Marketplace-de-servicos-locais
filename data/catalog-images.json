@@ -1,0 +1,485 @@
+{
+  "limpeza-casa": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471109/serviperto/catalogo/limpeza-casa.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/6195119/",
+    "pexelsId": "6195119",
+    "consulta": "house cleaning service"
+  },
+  "limpeza-profunda": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471368/serviperto/catalogo/limpeza-profunda.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/3785706/",
+    "pexelsId": "3785706",
+    "consulta": "woman cleaning kitchen gloves"
+  },
+  "limpeza-sofas": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471109/serviperto/catalogo/limpeza-sofas.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/4401538/",
+    "pexelsId": "4401538",
+    "consulta": "sofa cleaning"
+  },
+  "higienizacao-colchoes": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471109/serviperto/catalogo/higienizacao-colchoes.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/14675103/",
+    "pexelsId": "14675103",
+    "consulta": "mattress cleaning"
+  },
+  "limpeza-tapetes": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471121/serviperto/catalogo/limpeza-tapetes.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/4107278/",
+    "pexelsId": "4107278",
+    "consulta": "carpet cleaning"
+  },
+  "limpeza-pos-obra": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471426/serviperto/catalogo/limpeza-pos-obra.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/6196694/",
+    "pexelsId": "6196694",
+    "consulta": "construction debris cleanup"
+  },
+  "fugas-agua": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471121/serviperto/catalogo/fugas-agua.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/15206136/",
+    "pexelsId": "15206136",
+    "consulta": "leaking pipe plumber"
+  },
+  "desentupimento": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471369/serviperto/catalogo/desentupimento.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/33388390/",
+    "pexelsId": "33388390",
+    "consulta": "plumber unclogging sink"
+  },
+  "esquentadores": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471121/serviperto/catalogo/esquentadores.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/35290675/",
+    "pexelsId": "35290675",
+    "consulta": "water heater repair"
+  },
+  "maquinas-lavar": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471121/serviperto/catalogo/maquinas-lavar.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/31725399/",
+    "pexelsId": "31725399",
+    "consulta": "washing machine repair"
+  },
+  "estores": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471121/serviperto/catalogo/estores.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/13005096/",
+    "pexelsId": "13005096",
+    "consulta": "window blinds"
+  },
+  "quadro-eletrico": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471293/serviperto/catalogo/quadro-eletrico.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/33694016/",
+    "pexelsId": "33694016",
+    "consulta": "fuse box electrician"
+  },
+  "roupeiro": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471122/serviperto/catalogo/roupeiro.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/7587809/",
+    "pexelsId": "7587809",
+    "consulta": "wardrobe furniture"
+  },
+  "cama": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471122/serviperto/catalogo/cama.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/7491193/",
+    "pexelsId": "7491193",
+    "consulta": "bed frame assembly"
+  },
+  "secretaria": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471122/serviperto/catalogo/secretaria.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/9300768/",
+    "pexelsId": "9300768",
+    "consulta": "office desk furniture"
+  },
+  "cozinha-modular": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471122/serviperto/catalogo/cozinha-modular.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/4030055/",
+    "pexelsId": "4030055",
+    "consulta": "kitchen cabinets"
+  },
+  "parque-infantil": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471123/serviperto/catalogo/parque-infantil.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/4005325/",
+    "pexelsId": "4005325",
+    "consulta": "children playground"
+  },
+  "manicure": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471122/serviperto/catalogo/manicure.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/3738377/",
+    "pexelsId": "3738377",
+    "consulta": "manicure nails"
+  },
+  "pedicure": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471426/serviperto/catalogo/pedicure.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/5793888/",
+    "pexelsId": "5793888",
+    "consulta": "pedicure feet spa"
+  },
+  "corte-cabelo": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471124/serviperto/catalogo/corte-cabelo.png",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/30294767/",
+    "pexelsId": "30294767",
+    "consulta": "hairdresser scissors"
+  },
+  "maquilhagem": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471123/serviperto/catalogo/maquilhagem.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/5149734/",
+    "pexelsId": "5149734",
+    "consulta": "makeup artist"
+  },
+  "massagem": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471123/serviperto/catalogo/massagem.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/7233264/",
+    "pexelsId": "7233264",
+    "consulta": "massage therapy"
+  },
+  "lavagem-carro": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471294/serviperto/catalogo/lavagem-carro.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/5693660/",
+    "pexelsId": "5693660",
+    "consulta": "pressure washing car"
+  },
+  "lavagem-completa": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471124/serviperto/catalogo/lavagem-completa.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/17029940/",
+    "pexelsId": "17029940",
+    "consulta": "car detailing"
+  },
+  "interior-carro": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471124/serviperto/catalogo/interior-carro.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/5233264/",
+    "pexelsId": "5233264",
+    "consulta": "car vacuum cleaning"
+  },
+  "farois": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471124/serviperto/catalogo/farois.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/33695403/",
+    "pexelsId": "33695403",
+    "consulta": "car headlight"
+  },
+  "escovas": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471124/serviperto/catalogo/escovas.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/8586715/",
+    "pexelsId": "8586715",
+    "consulta": "windshield wipers"
+  },
+  "pintura-interior": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471124/serviperto/catalogo/pintura-interior.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/5583126/",
+    "pexelsId": "5583126",
+    "consulta": "painting wall roller"
+  },
+  "pintura-exterior": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471124/serviperto/catalogo/pintura-exterior.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/6764282/",
+    "pexelsId": "6764282",
+    "consulta": "house painting facade"
+  },
+  "papel-parede": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471125/serviperto/catalogo/papel-parede.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/4981812/",
+    "pexelsId": "4981812",
+    "consulta": "wallpaper installation"
+  },
+  "prateleiras": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471125/serviperto/catalogo/prateleiras.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/4503819/",
+    "pexelsId": "4503819",
+    "consulta": "wall shelves"
+  },
+  "vinil": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471293/serviperto/catalogo/vinil.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/6925113/",
+    "pexelsId": "6925113",
+    "consulta": "wall decal sticker"
+  },
+  "corte-relva": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471125/serviperto/catalogo/corte-relva.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/3999647/",
+    "pexelsId": "3999647",
+    "consulta": "lawn mower"
+  },
+  "manutencao-jardim": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471369/serviperto/catalogo/manutencao-jardim.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/38673906/",
+    "pexelsId": "38673906",
+    "consulta": "gardener planting flowers"
+  },
+  "poda-arvores": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471369/serviperto/catalogo/poda-arvores.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/4206115/",
+    "pexelsId": "4206115",
+    "consulta": "man cutting tree branches chainsaw"
+  },
+  "sebes": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471126/serviperto/catalogo/sebes.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/39590851/",
+    "pexelsId": "39590851",
+    "consulta": "hedge garden"
+  },
+  "sistema-rega": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471126/serviperto/catalogo/sistema-rega.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/23408532/",
+    "pexelsId": "23408532",
+    "consulta": "irrigation sprinkler"
+  },
+  "ar-condicionado": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471126/serviperto/catalogo/ar-condicionado.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/7347538/",
+    "pexelsId": "7347538",
+    "consulta": "air conditioner installation"
+  },
+  "torneiras": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471126/serviperto/catalogo/torneiras.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/10833563/",
+    "pexelsId": "10833563",
+    "consulta": "faucet installation"
+  },
+  "maquina-lavar-instalacao": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471126/serviperto/catalogo/maquina-lavar-instalacao.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/8146329/",
+    "pexelsId": "8146329",
+    "consulta": "washing machine plumbing"
+  },
+  "tv-parede": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471126/serviperto/catalogo/tv-parede.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/6020432/",
+    "pexelsId": "6020432",
+    "consulta": "tv wall mount"
+  },
+  "videoporteiro": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471127/serviperto/catalogo/videoporteiro.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/12508073/",
+    "pexelsId": "12508073",
+    "consulta": "door intercom"
+  },
+  "lavar-passar": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471369/serviperto/catalogo/lavar-passar.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/45980/",
+    "pexelsId": "45980",
+    "consulta": "stack of clean towels"
+  },
+  "cortinados": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471127/serviperto/catalogo/cortinados.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/14281158/",
+    "pexelsId": "14281158",
+    "consulta": "curtains window"
+  },
+  "casacos": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471127/serviperto/catalogo/casacos.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/8774650/",
+    "pexelsId": "8774650",
+    "consulta": "dry cleaning clothes"
+  },
+  "engomadoria": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471127/serviperto/catalogo/engomadoria.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/6045788/",
+    "pexelsId": "6045788",
+    "consulta": "ironing clothes"
+  },
+  "edredoens": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471127/serviperto/catalogo/edredoens.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/6903157/",
+    "pexelsId": "6903157",
+    "consulta": "bed duvet"
+  },
+  "manutencao-ac": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471127/serviperto/catalogo/manutencao-ac.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/6471913/",
+    "pexelsId": "6471913",
+    "consulta": "hvac technician"
+  },
+  "caldeira": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471128/serviperto/catalogo/caldeira.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/7937300/",
+    "pexelsId": "7937300",
+    "consulta": "boiler heating"
+  },
+  "revisao-eletrica": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471128/serviperto/catalogo/revisao-eletrica.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/5691642/",
+    "pexelsId": "5691642",
+    "consulta": "electrician wiring"
+  },
+  "piscina": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471128/serviperto/catalogo/piscina.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/8028684/",
+    "pexelsId": "8028684",
+    "consulta": "swimming pool cleaning"
+  },
+  "paineis-solares": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471128/serviperto/catalogo/paineis-solares.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/12606669/",
+    "pexelsId": "12606669",
+    "consulta": "solar panels"
+  },
+  "mudanca-casa": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471128/serviperto/catalogo/mudanca-casa.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/4554249/",
+    "pexelsId": "4554249",
+    "consulta": "moving boxes home"
+  },
+  "mudanca-escritorio": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471129/serviperto/catalogo/mudanca-escritorio.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/7217856/",
+    "pexelsId": "7217856",
+    "consulta": "office moving"
+  },
+  "transporte-moveis": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471128/serviperto/catalogo/transporte-moveis.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/7217839/",
+    "pexelsId": "7217839",
+    "consulta": "moving furniture"
+  },
+  "desmontagem": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471129/serviperto/catalogo/desmontagem.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/5805491/",
+    "pexelsId": "5805491",
+    "consulta": "furniture assembly"
+  },
+  "carrinha-motorista": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471129/serviperto/catalogo/carrinha-motorista.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/6169129/",
+    "pexelsId": "6169129",
+    "consulta": "delivery van driver"
+  },
+  "baratas": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471295/serviperto/catalogo/baratas.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/4176228/",
+    "pexelsId": "4176228",
+    "consulta": "exterminator spraying"
+  },
+  "formigas": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471129/serviperto/catalogo/formigas.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/37273378/",
+    "pexelsId": "37273378",
+    "consulta": "ant pest"
+  },
+  "pulgas": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471294/serviperto/catalogo/pulgas.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/39564718/",
+    "pexelsId": "39564718",
+    "consulta": "pest control worker"
+  },
+  "vespas": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471294/serviperto/catalogo/vespas.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/11354731/",
+    "pexelsId": "11354731",
+    "consulta": "bee hive nest"
+  },
+  "desratizacao": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471130/serviperto/catalogo/desratizacao.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/31370717/",
+    "pexelsId": "31370717",
+    "consulta": "pest control rat"
+  },
+  "terraco": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471130/serviperto/catalogo/terraco.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/36884223/",
+    "pexelsId": "36884223",
+    "consulta": "terrace roof waterproofing"
+  },
+  "humidade": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471130/serviperto/catalogo/humidade.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/6141203/",
+    "pexelsId": "6141203",
+    "consulta": "damp wall"
+  },
+  "bolor": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471131/serviperto/catalogo/bolor.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/3615725/",
+    "pexelsId": "3615725",
+    "consulta": "mold removal wall"
+  },
+  "casa-banho": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471426/serviperto/catalogo/casa-banho.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/6957081/",
+    "pexelsId": "6957081",
+    "consulta": "bathroom renovation"
+  },
+  "telhado": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471131/serviperto/catalogo/telhado.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/237907/",
+    "pexelsId": "237907",
+    "consulta": "roof tiles"
+  },
+  "admin-reparacoes": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471131/serviperto/catalogo/admin-reparacoes.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/5484718/",
+    "pexelsId": "5484718",
+    "consulta": "handyman tools"
+  },
+  "admin-montagem": {
+    "url": "https://res.cloudinary.com/agd59hox/image/upload/v1795471131/serviperto/catalogo/admin-montagem.jpg",
+    "fonte": "Pexels",
+    "pagina": "https://www.pexels.com/photo/4554427/",
+    "pexelsId": "4554427",
+    "consulta": "assembling furniture"
+  }
+}
