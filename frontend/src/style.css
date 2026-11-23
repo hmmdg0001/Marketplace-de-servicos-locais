@@ -110,6 +110,16 @@ form select:invalid{color:#b0b4ad}
 .service-detail-provider a,.order-card-people a{color:#28563e;text-decoration:none;border-bottom:1px dashed #b9c5ad}
 .service-detail-provider a:hover,.order-card-people a:hover{border-bottom-style:solid}
 .provider-card-link{display:inline-block;margin-top:10px;font-size:11px;font-weight:700;color:#28563e;text-decoration:none;border-bottom:1px dashed #b9c5ad}
+.order-chat{margin-top:28px;border-top:1px solid #e7e8e1;padding-top:22px}
+.chat-messages{display:flex;flex-direction:column;gap:10px;max-height:340px;overflow-y:auto;padding:4px 2px 10px}
+.chat-bubble{max-width:78%;border:1px solid #e7e8e1;border-radius:8px;padding:10px 12px;background:#fffefa}
+.chat-bubble.propria{align-self:flex-end;background:#eef2e7;border-color:#d9e2cd}
+.chat-meta{display:flex;align-items:baseline;justify-content:space-between;gap:14px;font-size:9px;color:#8a9086;margin-bottom:5px}
+.chat-meta strong{font-size:10px;color:#4d5e4f}
+.chat-bubble p{font-size:12px;line-height:1.6;color:#3d4a3f;margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.chat-form{display:flex;align-items:center;gap:8px;margin-top:10px}
+.chat-form input{flex:1;min-width:0;padding:11px 12px;border:1px solid #dfe2d8;border-radius:4px;font:inherit;font-size:12px;background:#fffefa;color:#293a2e}
+.chat-form input:focus{outline:none;border-color:#81916b}
 @media(max-width:900px){.catalog-grid{grid-template-columns:repeat(2,1fr)}.service-detail{grid-template-columns:1fr}.catalog-search select{width:160px}}
 @media(max-width:680px){.catalog-grid{grid-template-columns:1fr}.catalog-search{flex-direction:column}.catalog-search select{width:100%}.catalog-search .submit-button{width:100%}.topbar-nav{gap:14px;font-size:10px}}
 

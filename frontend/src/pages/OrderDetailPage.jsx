@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import OrderChat from "../components/OrderChat.jsx";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase.js";
 import {
@@ -356,6 +357,8 @@ export default function OrderDetailPage() {
           )}
         </div>
       </div>
+
+      {papel && <OrderChat orderId={id} user={user} />}
 
       <div className="order-history">
         <h2>Histórico de estados</h2>

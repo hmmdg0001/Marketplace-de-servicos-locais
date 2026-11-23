@@ -7,6 +7,7 @@ const Service = require('../models/service');
 const ProviderProfile = require('../models/providerProfile');
 const Review = require('../models/review');
 const User = require('../models/user');
+const Message = require('../models/message');
 
 // Máquina de estados do pedido. "por" indica quem pode executar a ação.
 const TRANSICOES = {
@@ -336,6 +337,75 @@ router.post('/:id/avaliacao', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Erro ao avaliar pedido:', error.message);
     res.status(500).json({ error: 'Erro ao avaliar pedido' });
+  }
+});
+
+// Só o cliente e o prestador do pedido podem ler/escrever na conversa.
+async function pedidoDoParticipante(req) {
+  if (!mongoose.isValidObjectId(req.params.id)) return null;
+  const pedido = await Order.findById(req.params.id).select('clienteId prestadorId').lean();
+  if (!pedido) return null;
+  const uid = req.user?.uid;
+  if (uid !== pedido.clienteId && uid !== pedido.prestadorId) return null;
+  return pedido;
+}
+
+// GET /api/orders/:id/mensagens - Conversa do pedido.
+router.get('/:id/mensagens', requireAuth, async (req, res) => {
+  try {
+    const pedido = await pedidoDoParticipante(req);
+    if (!pedido) return res.status(404).json({ error: 'Pedido não encontrado ou sem acesso' });
+
+    const mensagens = await Message.find({ pedidoId: pedido._id })
+      .sort({ createdAt: 1 })
+      .limit(200)
+      .lean();
+
+    const uids = [...new Set(mensagens.map((m) => m.remetenteUid))];
+    const utilizadores = await User.find({ uid: { $in: uids } }).select('uid name').lean();
+    const nomePorUid = new Map(utilizadores.map((u) => [u.uid, u.name]));
+
+    res.json(
+      mensagens.map((mensagem) => ({
+        _id: mensagem._id,
+        texto: mensagem.texto,
+        criadoEm: mensagem.createdAt,
+        remetenteUid: mensagem.remetenteUid,
+        remetenteNome: nomePorUid.get(mensagem.remetenteUid) || 'Participante',
+      }))
+    );
+  } catch (error) {
+    console.error('Erro ao ler mensagens:', error.message);
+    res.status(500).json({ error: 'Erro ao ler mensagens' });
+  }
+});
+
+// POST /api/orders/:id/mensagens - Enviar mensagem no pedido.
+router.post('/:id/mensagens', requireAuth, async (req, res) => {
+  try {
+    const pedido = await pedidoDoParticipante(req);
+    if (!pedido) return res.status(404).json({ error: 'Pedido não encontrado ou sem acesso' });
+
+    const texto = String(req.body?.texto ?? '').trim();
+    if (!texto) return res.status(400).json({ error: 'A mensagem não pode ficar vazia' });
+    if (texto.length > 2000) return res.status(400).json({ error: 'A mensagem é demasiado longa' });
+
+    const mensagem = await Message.create({
+      pedidoId: pedido._id,
+      remetenteUid: req.user.uid,
+      texto,
+    });
+
+    res.status(201).json({
+      _id: mensagem._id,
+      texto: mensagem.texto,
+      criadoEm: mensagem.createdAt,
+      remetenteUid: mensagem.remetenteUid,
+      remetenteNome: req.user.name || 'Participante',
+    });
+  } catch (error) {
+    console.error('Erro ao enviar mensagem:', error.message);
+    res.status(500).json({ error: 'Erro ao enviar mensagem' });
   }
 });
 
