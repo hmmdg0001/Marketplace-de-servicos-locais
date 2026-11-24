@@ -11,7 +11,7 @@ const Message = require('../models/message');
 const Notification = require('../models/notification');
 const Slot = require('../models/slot');
 const { calcularDuracao } = require('../utils/duracao');
-const { dentroDaJanela, blocosDe15 } = require('../utils/agenda');
+const { dentroDaJanela, blocosDe15, ESTADOS_BLOQUEIO } = require('../utils/agenda');
 
 // Máquina de estados do pedido. "por" indica quem pode executar a ação.
 const TRANSICOES = {
@@ -191,6 +191,28 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'O horário tem de ser num dia útil entre as 09h e as 18h' });
     }
     const fim = new Date(inicio.getTime() + duracao.tempoTotal * 60 * 1000);
+
+    // O mesmo prestador não pode ter dois serviços a sobrepor-se...
+    const conflitoPrestador = await Order.findOne({
+      prestadorId: servico.prestadorId,
+      estado: { $in: ESTADOS_BLOQUEIO },
+      inicio: { $lt: fim },
+      fim: { $gt: inicio },
+    });
+    if (conflitoPrestador) {
+      return res.status(409).json({ error: 'O prestador já tem outro pedido nesse horário' });
+    }
+
+    // ...nem o mesmo cliente pode estar em dois lugares ao mesmo tempo.
+    const conflitoCliente = await Order.findOne({
+      clienteId: req.user.uid,
+      estado: { $in: ESTADOS_BLOQUEIO },
+      inicio: { $lt: fim },
+      fim: { $gt: inicio },
+    });
+    if (conflitoCliente) {
+      return res.status(409).json({ error: 'Já tens outro pedido marcado nesse horário' });
+    }
 
     const autor = await User.findOne({ uid: req.user.uid }).select('name').lean();
 

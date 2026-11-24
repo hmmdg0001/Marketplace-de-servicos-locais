@@ -112,6 +112,7 @@ export default function ServiceDetailPage() {
     try {
       const params = new URLSearchParams({
         prestadorId: service.prestador?.uid || service.prestadorId || "",
+        clienteId: user?.uid || "",
         data: dados.dataDesejada,
         duracao: String(minutos),
       });

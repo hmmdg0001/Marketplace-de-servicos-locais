@@ -8,7 +8,7 @@ const { ESTADOS_BLOQUEIO, iniciosPossiveis } = require('../utils/agenda');
 // Devolve os inícios disponíveis para a duração pedida, dentro da janela 09–18h.
 router.get('/slots', async (req, res) => {
   try {
-    const { prestadorId, data } = req.query;
+    const { prestadorId, data, clienteId } = req.query;
     const duracao = Number(req.query.duracao);
 
     if (!prestadorId || !data) {
@@ -27,7 +27,7 @@ router.get('/slots', async (req, res) => {
     const ultimo = candidatos[candidatos.length - 1];
     const fimJanela = new Date(ultimo.getTime() + duracao * 60 * 1000);
 
-    const [pedidos, bloqueios] = await Promise.all([
+    const [pedidos, bloqueios, pedidosCliente] = await Promise.all([
       Order.find({
         prestadorId,
         estado: { $in: ESTADOS_BLOQUEIO },
@@ -43,9 +43,19 @@ router.get('/slots', async (req, res) => {
       })
         .select('inicio fim')
         .lean(),
+      clienteId
+        ? Order.find({
+            clienteId,
+            estado: { $in: ESTADOS_BLOQUEIO },
+            inicio: { $lt: fimJanela, $ne: null },
+            fim: { $gt: primeiro },
+          })
+            .select('inicio fim')
+            .lean()
+        : Promise.resolve([]),
     ]);
 
-    const ocupados = [...pedidos, ...bloqueios];
+    const ocupados = [...pedidos, ...bloqueios, ...pedidosCliente];
     const disponiveis = candidatos.filter((inicio) => {
       const fim = new Date(inicio.getTime() + duracao * 60 * 1000);
       return !ocupados.some((o) => o.inicio && o.fim && inicio < o.fim && fim > o.inicio);
