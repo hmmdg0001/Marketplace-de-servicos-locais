@@ -15,6 +15,14 @@ export default function ServiceForm({ user, categories, servico, onSaved, onCanc
     preco: servico?.preco ?? "",
     zona: servico?.zona || "",
   });
+  const [regras, setRegras] = useState({
+    tipo: servico?.regras_tempo?.tipo || "fixo",
+    tempo_base: servico?.regras_tempo?.tempo_base ?? 60,
+    fator: servico?.regras_tempo?.fator ?? "",
+    opcoesTexto: Object.entries(servico?.regras_tempo?.opcoes || {})
+      .map(([nome, valor]) => `${nome}=${valor}`)
+      .join("\n"),
+  });
   const [imagens, setImagens] = useState(() => (Array.isArray(servico?.imagens) ? servico.imagens : []));
   const [novas, setNovas] = useState([]);
   const [config, setConfig] = useState(null);
@@ -109,6 +117,28 @@ export default function ServiceForm({ user, categories, servico, onSaved, onCanc
     return enviadas;
   }
 
+  function alterarRegra(campo, valor) {
+    setRegras((prev) => ({ ...prev, [campo]: valor }));
+  }
+
+  function opcoesParaObjeto(texto) {
+    const resultado = {};
+    for (const linha of String(texto).split("\n")) {
+      const linhaLimpa = linha.trim();
+      if (!linhaLimpa) continue;
+      const separador = linhaLimpa.lastIndexOf("=");
+      if (separador < 1) throw new Error("Cada opção deve ter o formato Nome=minutos extra");
+      const nome = linhaLimpa.slice(0, separador).trim();
+      const minutos = Number(linhaLimpa.slice(separador + 1));
+      if (!nome || !Number.isFinite(minutos) || minutos < 0) {
+        throw new Error(`Opção inválida: ${linhaLimpa}`);
+      }
+      resultado[nome] = minutos;
+    }
+    if (Object.keys(resultado).length === 0) throw new Error("Introduz pelo menos uma opção");
+    return resultado;
+  }
+
   async function guardar(event) {
     event.preventDefault();
     setErro("");
@@ -119,6 +149,13 @@ export default function ServiceForm({ user, categories, servico, onSaved, onCanc
       }
       const enviadas = await enviarNovasImagens();
       const token = await user.getIdToken();
+      const regrasTempo = {
+        tipo: regras.tipo,
+        tempo_base: Number(regras.tempo_base || 0),
+      };
+      if (regras.tipo === "por_m2") regrasTempo.fator = Number(regras.fator || 0);
+      if (regras.tipo === "opcoes") regrasTempo.opcoes = opcoesParaObjeto(regras.opcoesTexto);
+
       const corpo = {
         titulo: valores.titulo,
         descricao: valores.descricao,
@@ -126,6 +163,7 @@ export default function ServiceForm({ user, categories, servico, onSaved, onCanc
         preco: Number(valores.preco || 0),
         zona: valores.zona,
         imagens: [...imagens, ...enviadas].slice(0, MAX_IMAGENS),
+        regras_tempo: regrasTempo,
       };
 
       const res = await fetch(
@@ -245,6 +283,54 @@ export default function ServiceForm({ user, categories, servico, onSaved, onCanc
             ))}
           </select>
         </label>
+
+        <fieldset className="regras-tempo-form">
+          <legend>Regras de tempo (duração)</legend>
+          <label>
+            Tipo de cálculo
+            <select value={regras.tipo} onChange={(event) => alterarRegra("tipo", event.target.value)}>
+              <option value="fixo">Fixo</option>
+              <option value="por_m2">Por área (m²)</option>
+              <option value="opcoes">Por opções</option>
+            </select>
+          </label>
+          <label>
+            Tempo base (minutos)
+            <input
+              type="number"
+              min="0"
+              value={regras.tempo_base}
+              onChange={(event) => alterarRegra("tempo_base", event.target.value)}
+              required
+            />
+          </label>
+          {regras.tipo === "por_m2" && (
+            <label>
+              Minutos por m²
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={regras.fator}
+                onChange={(event) => alterarRegra("fator", event.target.value)}
+                placeholder="Ex: 0.5"
+                required
+              />
+            </label>
+          )}
+          {regras.tipo === "opcoes" && (
+            <label>
+              Opções (uma por linha: Nome=minutos extra)
+              <textarea
+                rows={3}
+                value={regras.opcoesTexto}
+                onChange={(event) => alterarRegra("opcoesTexto", event.target.value)}
+                placeholder={"Ligeiro=0\nSUV=20"}
+                required
+              />
+            </label>
+          )}
+        </fieldset>
 
         {erro && <p className="form-message error" role="status">{erro}</p>}
 

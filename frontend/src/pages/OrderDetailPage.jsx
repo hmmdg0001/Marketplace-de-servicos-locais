@@ -239,6 +239,32 @@ export default function OrderDetailPage() {
               <dt>Data desejada</dt>
               <dd>{formatDate(pedido.dataDesejada)}</dd>
             </div>
+            {pedido.inicio && (
+              <div>
+                <dt>Horário reservado</dt>
+                <dd>
+                  {formatDateTime(pedido.inicio)} – {formatDateTime(pedido.fim)}
+                </dd>
+              </div>
+            )}
+            {pedido.tempo_total_calculado > 0 && (
+              <div>
+                <dt>Duração estimada</dt>
+                <dd>{pedido.tempo_total_calculado} min</dd>
+              </div>
+            )}
+            {pedido.parametros_tempo?.area !== undefined && (
+              <div>
+                <dt>Área</dt>
+                <dd>{pedido.parametros_tempo.area} m²</dd>
+              </div>
+            )}
+            {pedido.parametros_tempo?.opcao && (
+              <div>
+                <dt>Opção escolhida</dt>
+                <dd>{pedido.parametros_tempo.opcao}</dd>
+              </div>
+            )}
             <div>
               <dt>Preço</dt>
               <dd>{formatPrice(pedido.preco)}</dd>

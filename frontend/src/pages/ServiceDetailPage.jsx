@@ -8,6 +8,10 @@ function hoje() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function horaCurta(iso) {
+  return new Date(iso).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
+}
+
 export default function ServiceDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,6 +25,15 @@ export default function ServiceDetailPage() {
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [orderError, setOrderError] = useState("");
+
+  // Fluxo de marcação: 1 = dados, 2 = parâmetros de tempo, 3 = horário.
+  const [etapa, setEtapa] = useState(1);
+  const [dados, setDados] = useState({ descricao: "", morada: "", dataDesejada: "" });
+  const [parametros, setParametros] = useState({ area: "", opcao: "" });
+  const [duracao, setDuracao] = useState(null);
+  const [slots, setSlots] = useState([]);
+  const [slotEscolhido, setSlotEscolhido] = useState("");
+  const [aCarregarSlots, setACarregarSlots] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -49,32 +62,129 @@ export default function ServiceDetailPage() {
         if (!cancelado) setLoading(false);
       });
 
-    return () => {
-      cancelado = true;
-    };
+    return () => { cancelado = true; };
   }, [id]);
 
   useEffect(() => {
     let cancelado = false;
-
     fetch(`${apiBase}/services/${id}/avaliacoes`)
       .then(readJson)
-      .then((data) => {
-        if (!cancelado && Array.isArray(data)) setAvaliacoes(data);
-      })
+      .then((data) => { if (!cancelado && Array.isArray(data)) setAvaliacoes(data); })
       .catch((err) => console.error("Erro ao carregar avaliações:", err));
-
-    return () => {
-      cancelado = true;
-    };
+    return () => { cancelado = true; };
   }, [id]);
 
-  async function handleOrderSubmit(event) {
+  const tipo = service?.regras_tempo?.tipo || "fixo";
+  const opcoes = service?.regras_tempo?.opcoes || {};
+  const temParametros = tipo !== "fixo";
+
+  function abrirFormulario() {
+    setDados({ descricao: "", morada: "", dataDesejada: "" });
+    setParametros({ area: "", opcao: "" });
+    setDuracao(null);
+    setSlots([]);
+    setSlotEscolhido("");
+    setEtapa(1);
+    setOrderError("");
+    setShowForm(true);
+  }
+
+  function atualizarDado(campo, valor) {
+    setDados((prev) => ({ ...prev, [campo]: valor }));
+  }
+
+  async function calcular(params) {
+    const res = await fetch(`${apiBase}/services/${id}/duracao`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    const data = await readJson(res);
+    if (!res.ok) throw new Error(data.error || "Não foi possível calcular a duração");
+    setDuracao(data);
+    return data;
+  }
+
+  async function carregarSlots(minutos) {
+    setACarregarSlots(true);
+    setSlots([]);
+    setSlotEscolhido("");
+    try {
+      const params = new URLSearchParams({
+        prestadorId: service.prestador?.uid || service.prestadorId || "",
+        data: dados.dataDesejada,
+        duracao: String(minutos),
+      });
+      const data = await fetch(`${apiBase}/agenda/slots?${params.toString()}`).then(readJson);
+      setSlots(Array.isArray(data.slots) ? data.slots : []);
+    } catch (err) {
+      setOrderError("Não foi possível carregar os horários.");
+    } finally {
+      setACarregarSlots(false);
+    }
+  }
+
+  async function avancarDados(event) {
     event.preventDefault();
     setOrderError("");
     setBusy(true);
     try {
+      if (tipo === "fixo") {
+        const calculado = await calcular({});
+        setEtapa(3);
+        await carregarSlots(calculado.tempoTotal);
+      } else {
+        setEtapa(2);
+      }
+    } catch (err) {
+      setOrderError(err.message || "Erro ao calcular a duração.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function alterarParametro(campo, valor) {
+    const proximo = { ...parametros, [campo]: valor };
+    setParametros(proximo);
+    if ((campo === "area" && valor === "") || (campo === "opcao" && valor === "")) {
+      setDuracao(null);
+      return;
+    }
+    calcular(
+      tipo === "por_m2" ? { area: Number(proximo.area) } : { opcao: proximo.opcao }
+    ).catch(() => setDuracao(null));
+  }
+
+  async function avancarParametros() {
+    setOrderError("");
+    setBusy(true);
+    try {
+      const calculado = await calcular(
+        tipo === "por_m2" ? { area: Number(parametros.area) } : { opcao: parametros.opcao }
+      );
+      setEtapa(3);
+      await carregarSlots(calculado.tempoTotal);
+    } catch (err) {
+      setOrderError(err.message || "Erro ao calcular a duração.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleOrderSubmit(event) {
+    event.preventDefault();
+    if (etapa !== 3) return;
+    setOrderError("");
+    setBusy(true);
+    try {
       const token = await user.getIdToken();
+      const parametrosTempo =
+        tipo === "por_m2"
+          ? { area: Number(parametros.area) }
+          : tipo === "opcoes"
+            ? { opcao: parametros.opcao }
+            : {};
+
       const res = await fetch(`${apiBase}/orders`, {
         method: "POST",
         headers: {
@@ -83,9 +193,11 @@ export default function ServiceDetailPage() {
         },
         body: JSON.stringify({
           servicoId: service._id,
-          descricao: event.target.descricao.value,
-          dataDesejada: event.target.dataDesejada.value,
-          morada: event.target.morada.value,
+          descricao: dados.descricao,
+          dataDesejada: dados.dataDesejada,
+          morada: dados.morada,
+          inicio: slotEscolhido,
+          parametrosTempo,
         }),
       });
       const data = await readJson(res);
@@ -177,7 +289,7 @@ export default function ServiceDetailPage() {
           )}
 
           {user && !proprio && service.ativo && !showForm && (
-            <button className="submit-button" type="button" onClick={() => { setShowForm(true); setOrderError(""); }}>
+            <button className="submit-button" type="button" onClick={abrirFormulario}>
               Pedir este serviço
             </button>
           )}
@@ -185,37 +297,135 @@ export default function ServiceDetailPage() {
           {user && !proprio && service.ativo && showForm && (
             <div className="order-form-panel">
               <h3>Enviar pedido ao prestador</h3>
+              <div className="booking-steps" aria-label="Passos da marcação">
+                <span className={etapa === 1 ? "ativo" : ""}>1. Dados</span>
+                {temParametros && <span className={etapa === 2 ? "ativo" : ""}>2. Duração</span>}
+                <span className={etapa === 3 ? "ativo" : ""}>{temParametros ? "3. Horário" : "2. Horário"}</span>
+              </div>
+
               <form onSubmit={handleOrderSubmit}>
-                <label>
-                  Descrição do trabalho
-                  <textarea
-                    name="descricao"
-                    rows={4}
-                    required
-                    placeholder="Explica o que precisas, o tamanho do espaço, etc."
-                  />
-                </label>
-                <label>
-                  Data desejada
-                  <input type="date" name="dataDesejada" min={hoje()} required />
-                </label>
-                <label>
-                  Morada
-                  <input type="text" name="morada" required placeholder="Rua, número, código postal" />
-                </label>
-                <p className="field-hint">O valor do serviço é {formatPrice(service.preco)}. O prestador aceita ou recusa o pedido.</p>
-                {orderError && <p className="form-message error">{orderError}</p>}
-                <button className="submit-button" type="submit" disabled={busy}>
-                  {busy ? "A enviar…" : "Enviar pedido"}
-                </button>
-                <button
-                  className="submit-button"
-                  type="button"
-                  onClick={() => { setShowForm(false); setOrderError(""); }}
-                  disabled={busy}
-                >
-                  Cancelar
-                </button>
+                {etapa === 1 && (
+                  <>
+                    <label>
+                      Descrição do trabalho
+                      <textarea
+                        rows={4}
+                        required
+                        value={dados.descricao}
+                        onChange={(event) => atualizarDado("descricao", event.target.value)}
+                        placeholder="Explica o que precisas, o tamanho do espaço, etc."
+                      />
+                    </label>
+                    <label>
+                      Data desejada
+                      <input
+                        type="date"
+                        min={hoje()}
+                        required
+                        value={dados.dataDesejada}
+                        onChange={(event) => atualizarDado("dataDesejada", event.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Morada
+                      <input
+                        type="text"
+                        required
+                        value={dados.morada}
+                        onChange={(event) => atualizarDado("morada", event.target.value)}
+                        placeholder="Rua, número, código postal"
+                      />
+                    </label>
+                    <button className="submit-button" type="button" onClick={avancarDados} disabled={busy}>
+                      {busy ? "A calcular…" : "Continuar"}
+                    </button>
+                    <button className="submit-button" type="button" onClick={() => setShowForm(false)} disabled={busy}>
+                      Cancelar
+                    </button>
+                  </>
+                )}
+
+                {etapa === 2 && temParametros && (
+                  <>
+                    {tipo === "por_m2" ? (
+                      <label>
+                        Área a tratar (m²)
+                        <input
+                          type="number"
+                          min="1"
+                          step="0.5"
+                          required
+                          value={parametros.area}
+                          onChange={(event) => alterarParametro("area", event.target.value)}
+                          placeholder="Ex: 80"
+                        />
+                      </label>
+                    ) : (
+                      <label>
+                        Tipo de veículo
+                        <select
+                          required
+                          value={parametros.opcao}
+                          onChange={(event) => alterarParametro("opcao", event.target.value)}
+                        >
+                          <option value="" disabled>Escolhe uma opção</option>
+                          {Object.entries(opcoes).map(([nome]) => (
+                            <option key={nome} value={nome}>{nome}</option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+
+                    <p className="duracao-estimada">
+                      Duração estimada: <strong>{duracao ? `${duracao.tempoTotal} min` : "por calcular"}</strong>
+                    </p>
+                    <button className="submit-button" type="button" onClick={avancarParametros} disabled={busy}>
+                      {busy ? "A procurar horários…" : "Ver horários disponíveis"}
+                    </button>
+                    <button className="submit-button" type="button" onClick={() => setEtapa(1)} disabled={busy}>
+                      Voltar
+                    </button>
+                  </>
+                )}
+
+                {etapa === 3 && (
+                  <>
+                    <p className="duracao-estimada">
+                      Duração estimada: <strong>{duracao ? `${duracao.tempoTotal} min` : "por calcular"}</strong>
+                      {" · "}Horários das 09h às 18h, em dias úteis.
+                    </p>
+
+                    {aCarregarSlots ? (
+                      <p className="catalog-count">A carregar horários…</p>
+                    ) : slots.length === 0 ? (
+                      <p className="catalog-empty">Não há horários disponíveis para esta data e duração.</p>
+                    ) : (
+                      <div className="slot-grid">
+                        {slots.map((slot) => (
+                          <button
+                            key={slot.inicio}
+                            type="button"
+                            className={slotEscolhido === slot.inicio ? "slot selecionado" : "slot"}
+                            onClick={() => setSlotEscolhido(slot.inicio)}
+                          >
+                            {horaCurta(slot.inicio)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <p className="field-hint">O valor do serviço é {formatPrice(service.preco)}. O prestador aceita ou recusa o pedido.</p>
+                    {orderError && <p className="form-message error" role="status">{orderError}</p>}
+                    <button className="submit-button" type="submit" disabled={busy || !slotEscolhido}>
+                      {busy ? "A enviar…" : "Enviar pedido"}
+                    </button>
+                    <button className="submit-button" type="button" onClick={() => setEtapa(temParametros ? 2 : 1)} disabled={busy}>
+                      Voltar
+                    </button>
+                  </>
+                )}
+
+                {etapa !== 3 && orderError && <p className="form-message error" role="status">{orderError}</p>}
               </form>
             </div>
           )}
