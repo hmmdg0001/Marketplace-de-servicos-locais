@@ -364,8 +364,13 @@ router.get('/:id/mensagens', requireAuth, async (req, res) => {
       .lean();
 
     const uids = [...new Set(mensagens.map((m) => m.remetenteUid))];
-    const utilizadores = await User.find({ uid: { $in: uids } }).select('uid name').lean();
-    const nomePorUid = new Map(utilizadores.map((u) => [u.uid, u.name]));
+    const utilizadores = await User.find({ uid: { $in: uids } }).select('uid name role').lean();
+    const nomePorUid = new Map(
+      utilizadores.map((u) => [
+        u.uid,
+        u.role === 'admin' ? 'Administração (suporte)' : u.name || 'Participante',
+      ])
+    );
 
     res.json(
       mensagens.map((mensagem) => ({
