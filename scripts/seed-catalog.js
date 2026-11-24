@@ -7,6 +7,7 @@ const ProviderProfile = require('../models/providerProfile');
 const Service = require('../models/service');
 const { categories, providers, services } = require('../data/catalog');
 const imagensCatalogo = require('../data/catalog-images.json');
+const regrasTempo = require('../data/regras-tempo.json');
 
 const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || 'henriquemmarinho66@gmail.com';
 
@@ -120,6 +121,7 @@ async function seedServices(categoryMap, admin) {
         zona: isAdmin ? 'Fafe' : providerZones.get(service.prestador) || '',
         ativo: true,
         imagens: imagensCatalogo[service.imagemChave || service.chave] ? [imagensCatalogo[service.imagemChave || service.chave].url] : [],
+        regras_tempo: regrasTempo[service.titulo] || regrasTempo.padrao,
         isSeed: true,
       };
     })

@@ -36,6 +36,11 @@ const orderSchema = new Schema(
     preco: { type: Number, default: 0, min: 0 },
     estado: { type: String, enum: ESTADOS, default: 'Submetido', index: true },
     historico: { type: [historicoSchema], default: [] },
+    // Duração dinâmica e slot reservado na agenda.
+    tempo_total_calculado: { type: Number, min: 0, index: true },
+    parametros_tempo: { type: Schema.Types.Mixed, default: {} },
+    inicio: { type: Date, default: null, index: true },
+    fim: { type: Date, default: null, index: true },
   },
   { timestamps: true }
 );

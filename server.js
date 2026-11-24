@@ -22,6 +22,7 @@ app.use(express.json());
   app.use('/api/orders', require('./routes/orders'));
   app.use('/api/upload', require('./routes/upload'));
   app.use('/api/notificacoes', require('./routes/notificacoes'));
+  app.use('/api/agenda', require('./routes/agenda'));
   app.use('/api/admin', require('./routes/admin'));
 
   // Rota raiz

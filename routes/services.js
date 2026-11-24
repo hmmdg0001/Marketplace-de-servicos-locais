@@ -8,6 +8,7 @@ const Category = require('../models/category');
 const ProviderProfile = require('../models/providerProfile');
 const Review = require('../models/review');
 const User = require('../models/user');
+const { calcularDuracao } = require('../utils/duracao');
 
 const MAX_LIMIT = 48;
 
@@ -18,6 +19,30 @@ function escapeRegex(text) {
 function numero(valor, fallback = 0) {
   const parsed = Number(valor);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function normalizarRegrasTempo(valor) {
+  if (valor === undefined || valor === null) return undefined;
+  const tipo = String(valor.tipo || 'fixo');
+  if (!['fixo', 'por_m2', 'opcoes'].includes(tipo)) {
+    throw new Error('Tipo de regra de tempo inválido');
+  }
+  const regras = { tipo, tempo_base: numero(valor.tempo_base, 60) };
+  if (regras.tempo_base < 0) throw new Error('O tempo base não pode ser negativo');
+
+  if (tipo === 'por_m2') {
+    regras.fator = numero(valor.fator, 0);
+    if (regras.fator < 0) throw new Error('O fator não pode ser negativo');
+  }
+  if (tipo === 'opcoes') {
+    if (!valor.opcoes || typeof valor.opcoes !== 'object' || Object.keys(valor.opcoes).length === 0) {
+      throw new Error('Introduz pelo menos uma opção de duração');
+    }
+    regras.opcoes = Object.fromEntries(
+      Object.entries(valor.opcoes).map(([nome, minutos]) => [String(nome), numero(minutos, 0)])
+    );
+  }
+  return regras;
 }
 
 // Junta a categoria e o prestador a cada serviço, para o frontend não ter
@@ -187,6 +212,23 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// POST /api/services/:id/duracao - Pré-visualização da duração para o cliente.
+// O cálculo final é sempre refeito no backend ao criar o pedido.
+router.post('/:id/duracao', async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+    const servico = await Service.findById(req.params.id).select('regras_tempo').lean();
+    if (!servico) return res.status(404).json({ error: 'Serviço não encontrado' });
+
+    const regras = servico.regras_tempo || { tipo: 'fixo', tempo_base: 60 };
+    res.json(calcularDuracao(regras, req.body || {}));
+  } catch (erro) {
+    res.status(400).json({ error: erro.message });
+  }
+});
+
 // GET /api/services/:id/avaliacoes - Avaliações verificadas do serviço.
 router.get('/:id/avaliacoes', async (req, res) => {
   try {
@@ -241,6 +283,13 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Adiciona pelo menos uma fotografia antes de publicar' });
     }
 
+    let regrasTempo;
+    try {
+      regrasTempo = normalizarRegrasTempo(body.regras_tempo) || { tipo: 'fixo', tempo_base: 60 };
+    } catch (erro) {
+      return res.status(400).json({ error: erro.message });
+    }
+
     const categoria = await resolverCategoria(body.categoriaId ?? body.categoria);
     if ((body.categoriaId || body.categoria) && !categoria) {
       return res.status(400).json({ error: 'Categoria inválida' });
@@ -264,6 +313,7 @@ router.post('/', requireAuth, async (req, res) => {
       zona,
       ativo: body.ativo !== false,
       imagens: Array.isArray(body.imagens) ? body.imagens.slice(0, 6) : [],
+      regras_tempo: regrasTempo,
     });
 
     res.status(201).json(servico);
@@ -319,6 +369,13 @@ router.put(
       if (body.ativo !== undefined) atualizacoes.ativo = Boolean(body.ativo);
 
       if (Array.isArray(body.imagens)) atualizacoes.imagens = body.imagens.slice(0, 6);
+      if (body.regras_tempo !== undefined) {
+        try {
+          atualizacoes.regras_tempo = normalizarRegrasTempo(body.regras_tempo);
+        } catch (erro) {
+          return res.status(400).json({ error: erro.message });
+        }
+      }
 
       const servico = await Service.findByIdAndUpdate(req.params.id, atualizacoes, {
         new: true,

@@ -1,0 +1,31 @@
+{
+  "padrao": { "tipo": "fixo", "tempo_base": 60 },
+
+  "Manicure ao domicílio": { "tipo": "fixo", "tempo_base": 45 },
+  "Pedicure ao domicílio": { "tipo": "fixo", "tempo_base": 45 },
+  "Corte de cabelo ao domicílio": { "tipo": "fixo", "tempo_base": 30 },
+  "Maquilhagem para eventos": { "tipo": "fixo", "tempo_base": 60 },
+  "Massagem relaxante": { "tipo": "fixo", "tempo_base": 60 },
+
+  "Desinfestação de baratas": { "tipo": "por_m2", "tempo_base": 30, "fator": 0.5 },
+  "Controlo de formigas": { "tipo": "por_m2", "tempo_base": 30, "fator": 0.5 },
+  "Tratamento de pulgas": { "tipo": "por_m2", "tempo_base": 30, "fator": 0.5 },
+  "Remoção de ninhos de vespas": { "tipo": "por_m2", "tempo_base": 30, "fator": 0.5 },
+  "Desratização": { "tipo": "por_m2", "tempo_base": 30, "fator": 0.5 },
+
+  "Lavagem de carro ao domicílio": {
+    "tipo": "opcoes",
+    "tempo_base": 45,
+    "opcoes": { "Ligeiro": 0, "SUV": 20, "Carrinha": 30 }
+  },
+  "Lavagem completa de carro": {
+    "tipo": "opcoes",
+    "tempo_base": 60,
+    "opcoes": { "Ligeiro": 0, "SUV": 20, "Carrinha": 30 }
+  },
+  "Limpeza interior de carro": {
+    "tipo": "opcoes",
+    "tempo_base": 45,
+    "opcoes": { "Ligeiro": 0, "SUV": 20, "Carrinha": 30 }
+  }
+}

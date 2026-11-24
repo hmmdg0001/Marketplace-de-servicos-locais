@@ -9,6 +9,9 @@ const Review = require('../models/review');
 const User = require('../models/user');
 const Message = require('../models/message');
 const Notification = require('../models/notification');
+const Slot = require('../models/slot');
+const { calcularDuracao } = require('../utils/duracao');
+const { dentroDaJanela, blocosDe15 } = require('../utils/agenda');
 
 // Máquina de estados do pedido. "por" indica quem pode executar a ação.
 const TRANSICOES = {
@@ -173,6 +176,22 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Não podes pedir o teu próprio serviço' });
     }
 
+    // A duração é sempre calculada no backend, a partir das regras do serviço.
+    const parametrosTempo = req.body.parametrosTempo || {};
+    const duracao = calcularDuracao(
+      servico.regras_tempo || { tipo: 'fixo', tempo_base: 60 },
+      parametrosTempo
+    );
+
+    const inicio = new Date(req.body.inicio);
+    if (Number.isNaN(inicio.getTime())) {
+      return res.status(400).json({ error: 'Escolhe um horário válido para o serviço' });
+    }
+    if (!dentroDaJanela(inicio, duracao.tempoTotal)) {
+      return res.status(400).json({ error: 'O horário tem de ser num dia útil entre as 09h e as 18h' });
+    }
+    const fim = new Date(inicio.getTime() + duracao.tempoTotal * 60 * 1000);
+
     const autor = await User.findOne({ uid: req.user.uid }).select('name').lean();
 
     const pedido = await Order.create({
@@ -181,9 +200,13 @@ router.post('/', requireAuth, async (req, res) => {
       prestadorId: servico.prestadorId,
       descricao,
       morada,
-      dataDesejada,
+      dataDesejada: inicio,
       preco: servico.preco || 0,
       estado: 'Submetido',
+      inicio,
+      fim,
+      tempo_total_calculado: duracao.tempoTotal,
+      parametros_tempo: parametrosTempo,
       historico: [
         {
           de: null,
@@ -194,6 +217,21 @@ router.post('/', requireAuth, async (req, res) => {
         },
       ],
     });
+
+    // Um documento por bloco de 15 min; o índice único impede dupla reserva.
+    try {
+      await Slot.insertMany(
+        blocosDe15(inicio, fim).map((bloco) => ({
+          prestadorId: servico.prestadorId,
+          inicio: bloco.inicio,
+          fim: bloco.fim,
+          pedidoId: pedido._id,
+        }))
+      );
+    } catch (erro) {
+      await Order.deleteOne({ _id: pedido._id });
+      return res.status(409).json({ error: 'Esse horário já foi reservado. Escolhe outro.' });
+    }
 
     await Notification.insertMany(
       (await destinatariosAviso(pedido, req.user.uid)).map((uid) => ({
@@ -279,6 +317,11 @@ router.post('/:id/transicoes', requireAuth, async (req, res) => {
 
     if (!atualizado) {
       return res.status(409).json({ error: 'O pedido mudou de estado entretanto. Atualiza a página.' });
+    }
+
+    // Estes estados libertam a agenda.
+    if (['Cancelado', 'Recusado', 'Concluído'].includes(transicao.para)) {
+      await Slot.deleteMany({ pedidoId: atualizado._id });
     }
 
     res.json(await pedidoHidratado(atualizado._id));
