@@ -240,8 +240,8 @@ export default function ServiceDetailPage() {
         <div className="reviews-head">
           <h2>Avaliações</h2>
           <span>
-            {totalAvaliacoes > 0
-              ? `${media.toFixed(1)}/5 · ${totalAvaliacoes} avaliação(ões) verificada(s)`
+            {avaliacoes.length > 0
+              ? `${media.toFixed(1)}/5 · ${avaliacoes.length} ${avaliacoes.length === 1 ? "avaliação verificada" : "avaliações verificadas"}`
               : "Ainda sem avaliações"}
           </span>
         </div>
