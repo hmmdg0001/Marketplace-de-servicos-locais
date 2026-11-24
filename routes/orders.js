@@ -8,6 +8,7 @@ const ProviderProfile = require('../models/providerProfile');
 const Review = require('../models/review');
 const User = require('../models/user');
 const Message = require('../models/message');
+const Notification = require('../models/notification');
 
 // Máquina de estados do pedido. "por" indica quem pode executar a ação.
 const TRANSICOES = {
@@ -83,6 +84,15 @@ async function pedidoHidratado(id) {
 async function eAdmin(uid) {
   const utilizador = await User.findOne({ uid }).select('role').lean();
   return utilizador?.role === 'admin';
+}
+
+// Participantes que devem receber um aviso (o remetente nunca recebe o dele).
+async function destinatariosAviso(pedido, remetenteUid) {
+  const uids = new Set([pedido.clienteId, pedido.prestadorId].filter(Boolean));
+  uids.delete(remetenteUid);
+  const admins = await User.find({ role: 'admin' }).select('uid').lean();
+  admins.forEach((admin) => uids.add(admin.uid));
+  return [...uids];
 }
 
 // GET /api/orders - Pedidos em que o utilizador é cliente ou prestador.
@@ -184,6 +194,16 @@ router.post('/', requireAuth, async (req, res) => {
         },
       ],
     });
+
+    await Notification.insertMany(
+      (await destinatariosAviso(pedido, req.user.uid)).map((uid) => ({
+        userId: uid,
+        tipo: 'pedido',
+        titulo: 'Novo pedido de serviço',
+        texto: `${autor?.name || 'Um cliente'} pediu “${servico.titulo}”.`,
+        pedidoId: pedido._id,
+      }))
+    );
 
     res.status(201).json(await pedidoHidratado(pedido._id));
   } catch (error) {
@@ -408,12 +428,24 @@ router.post('/:id/mensagens', requireAuth, async (req, res) => {
       req.user.uid !== pedido.prestadorId &&
       (await eAdmin(req.user.uid));
 
+    const nomeRemetente = ehAdmin ? 'Administração (suporte)' : req.user.name || 'Participante';
+
+    await Notification.insertMany(
+      (await destinatariosAviso(pedido, req.user.uid)).map((uid) => ({
+        userId: uid,
+        tipo: 'mensagem',
+        titulo: 'Nova mensagem no pedido',
+        texto: `${nomeRemetente}: ${texto.slice(0, 120)}`,
+        pedidoId: pedido._id,
+      }))
+    );
+
     res.status(201).json({
       _id: mensagem._id,
       texto: mensagem.texto,
       criadoEm: mensagem.createdAt,
       remetenteUid: mensagem.remetenteUid,
-      remetenteNome: ehAdmin ? 'Administração (suporte)' : req.user.name || 'Participante',
+      remetenteNome: nomeRemetente,
     });
   } catch (error) {
     console.error('Erro ao enviar mensagem:', error.message);

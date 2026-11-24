@@ -7,9 +7,11 @@ import OrderDetailPage from "./pages/OrderDetailPage.jsx";
 import MyServicesPage from "./pages/MyServicesPage.jsx";
 import ProviderPage from "./pages/ProviderPage.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
+import { NotificationProvider, NotificationBell } from "./components/NotificationCenter.jsx";
 
 export default function App() {
   return (
+    <NotificationProvider>
     <main className="page-shell">
       <header className="topbar">
         <Link className="brand" to="/" aria-label="ServiPerto, início">
@@ -21,6 +23,7 @@ export default function App() {
           <Link to="/">Explorar</Link>
           <Link to="/pedidos">Os meus pedidos</Link>
           <Link to="/conta">A minha conta</Link>
+          <NotificationBell />
         </nav>
       </header>
 
@@ -38,5 +41,6 @@ export default function App() {
 
       <footer className="footer"><span>© 2026 ServiPerto</span><span>Feito para aproximar pessoas.</span></footer>
     </main>
+    </NotificationProvider>
   );
 }
