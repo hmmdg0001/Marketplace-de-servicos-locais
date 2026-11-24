@@ -4,9 +4,20 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase.js";
 import { apiBase, readJson, formatPrice, formatDate, estadoClasse } from "../lib/api.js";
 
+const ESTADOS = [
+  "Submetido",
+  "Aceite",
+  "Em execução",
+  "Aguarda confirmação",
+  "Concluído",
+  "Recusado",
+  "Cancelado",
+];
+
 export default function OrdersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const papel = searchParams.get("papel") === "prestador" ? "prestador" : "cliente";
+  const estadoFiltro = searchParams.get("estado") || "";
 
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
@@ -57,6 +68,17 @@ export default function OrdersPage() {
     };
   }, [user, papel]);
 
+  const pedidosFiltrados = estadoFiltro
+    ? pedidos.filter((pedido) => pedido.estado === estadoFiltro)
+    : pedidos;
+
+  function escolherEstado(valor) {
+    const params = new URLSearchParams(searchParams);
+    if (valor) params.set("estado", valor);
+    else params.delete("estado");
+    setSearchParams(params);
+  }
+
   if (!authReady) {
     return <section className="catalog-page"><p className="catalog-count">A carregar…</p></section>;
   }
@@ -88,7 +110,11 @@ export default function OrdersPage() {
           role="tab"
           aria-selected={papel === "cliente"}
           className={papel === "cliente" ? "selected" : ""}
-          onClick={() => setSearchParams({ papel: "cliente" })}
+          onClick={() => {
+            const params = new URLSearchParams(searchParams);
+            params.set("papel", "cliente");
+            setSearchParams(params);
+          }}
         >
           Como cliente
         </button>
@@ -97,28 +123,55 @@ export default function OrdersPage() {
           role="tab"
           aria-selected={papel === "prestador"}
           className={papel === "prestador" ? "selected" : ""}
-          onClick={() => setSearchParams({ papel: "prestador" })}
+          onClick={() => {
+            const params = new URLSearchParams(searchParams);
+            params.set("papel", "prestador");
+            setSearchParams(params);
+          }}
         >
           Como prestador
         </button>
       </div>
 
+      <div className="orders-filters">
+        <label>
+          Estado
+          <select value={estadoFiltro} onChange={(event) => escolherEstado(event.target.value)}>
+            <option value="">Todos os estados</option>
+            {ESTADOS.map((estado) => (
+              <option key={estado} value={estado}>{estado}</option>
+            ))}
+          </select>
+        </label>
+        {estadoFiltro && (
+          <button type="button" className="link-button" onClick={() => escolherEstado("")}>
+            Limpar filtro
+          </button>
+        )}
+      </div>
+
       <p className="catalog-count">
-        {loading ? "A carregar pedidos…" : `${pedidos.length} pedido(s)`}
+        {loading
+          ? "A carregar pedidos…"
+          : estadoFiltro
+            ? `${pedidosFiltrados.length} de ${pedidos.length} pedido(s)`
+            : `${pedidos.length} pedido(s)`}
       </p>
 
       {error && <p className="form-message error">{error}</p>}
 
-      {!loading && !error && pedidos.length === 0 && (
+      {!loading && !error && pedidosFiltrados.length === 0 && (
         <p className="catalog-empty">
-          {papel === "cliente"
-            ? "Ainda não fizeste pedidos. Explora o catálogo para encontrares um serviço."
-            : "Ainda não recebeste pedidos nos teus serviços."}
+          {estadoFiltro
+            ? `Não tens pedidos com o estado “${estadoFiltro}".`
+            : papel === "cliente"
+              ? "Ainda não fizeste pedidos. Explora o catálogo para encontrares um serviço."
+              : "Ainda não recebeste pedidos nos teus serviços."}
         </p>
       )}
 
       <ul className="orders-list">
-        {pedidos.map((pedido) => (
+        {pedidosFiltrados.map((pedido) => (
           <li key={pedido._id} className="order-row">
             <div className="order-row-main">
               <p className="catalog-card-category">

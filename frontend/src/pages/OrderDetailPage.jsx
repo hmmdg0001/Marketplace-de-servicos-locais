@@ -194,7 +194,9 @@ export default function OrderDetailPage() {
     );
   }
 
-  const papel = pedido.prestadorId === user.uid ? "prestador" : pedido.clienteId === user.uid ? "cliente" : null;
+  const papel =
+    pedido.papel ||
+    (pedido.prestadorId === user.uid ? "prestador" : pedido.clienteId === user.uid ? "cliente" : null);
   const acoes = papel ? acoesDisponiveis(papel, pedido.estado) : [];
 
   return (
@@ -255,7 +257,15 @@ export default function OrderDetailPage() {
         <div className="order-card order-actions">
           <h2>Ações do pedido</h2>
           <p className="order-role">
-            Estás a ver este pedido como <strong>{papel === "prestador" ? "prestador" : "cliente"}</strong>.
+            Estás a ver este pedido como{" "}
+            <strong>
+              {papel === "prestador"
+                ? "prestador"
+                : papel === "admin"
+                  ? "administrador (suporte)"
+                  : "cliente"}
+            </strong>
+            .
           </p>
 
           {mensagem.text && <p className={`form-message ${mensagem.kind}`}>{mensagem.text}</p>}

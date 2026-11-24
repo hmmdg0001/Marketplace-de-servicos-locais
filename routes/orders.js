@@ -118,11 +118,13 @@ router.get('/:id', requireAuth, async (req, res) => {
     if (!pedido) return res.status(404).json({ error: 'Pedido não encontrado' });
 
     const participa = pedido.clienteId === req.user.uid || pedido.prestadorId === req.user.uid;
+    const admin = !participa && (await eAdmin(req.user.uid));
 
-    if (!participa && !(await eAdmin(req.user.uid))) {
+    if (!participa && !admin) {
       return res.status(403).json({ error: 'Não tens acesso a este pedido' });
     }
 
+    pedido.papel = admin ? 'admin' : pedido.prestadorId === req.user.uid ? 'prestador' : 'cliente';
     res.json(pedido);
   } catch (error) {
     console.error('Erro ao buscar pedido:', error.message);
@@ -346,7 +348,7 @@ async function pedidoDoParticipante(req) {
   const pedido = await Order.findById(req.params.id).select('clienteId prestadorId').lean();
   if (!pedido) return null;
   const uid = req.user?.uid;
-  if (uid !== pedido.clienteId && uid !== pedido.prestadorId) return null;
+  if (uid !== pedido.clienteId && uid !== pedido.prestadorId && !(await eAdmin(uid))) return null;
   return pedido;
 }
 
@@ -396,12 +398,17 @@ router.post('/:id/mensagens', requireAuth, async (req, res) => {
       texto,
     });
 
+    const ehAdmin =
+      req.user.uid !== pedido.clienteId &&
+      req.user.uid !== pedido.prestadorId &&
+      (await eAdmin(req.user.uid));
+
     res.status(201).json({
       _id: mensagem._id,
       texto: mensagem.texto,
       criadoEm: mensagem.createdAt,
       remetenteUid: mensagem.remetenteUid,
-      remetenteNome: req.user.name || 'Participante',
+      remetenteNome: ehAdmin ? 'Administração (suporte)' : req.user.name || 'Participante',
     });
   } catch (error) {
     console.error('Erro ao enviar mensagem:', error.message);
