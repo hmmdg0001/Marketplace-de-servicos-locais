@@ -17,18 +17,31 @@ export default function App() {
     <NotificationProvider>
     <main className={eInicio ? "page-shell page-shell-home" : "page-shell"}>
       {!eInicio && (
-      <header className="topbar">
-        <Link className="brand" to="/" aria-label="ServiPerto, início">
-          <span className="brand-mark" aria-hidden="true">s</span>
-          <span>servi<span className="brand-accent">perto</span></span>
-        </Link>
+      <header className="border-b border-brand-line bg-white [&_a]:no-underline">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
+          <Link to="/" className="font-display text-xl font-extrabold tracking-tight text-brand-navy" aria-label="ServiPerto, início">
+            servi<span className="text-brand-purple">perto</span>
+          </Link>
 
-        <nav className="topbar-nav" aria-label="Navegação principal">
-          <Link to="/">Explorar</Link>
-          <Link to="/pedidos">Os meus pedidos</Link>
-          <Link to="/conta">A minha conta</Link>
-          <NotificationBell />
-        </nav>
+          <nav className="flex items-center gap-1 text-sm sm:gap-2" aria-label="Navegação principal">
+            {[
+              ["/", "Explorar"],
+              ["/pedidos", "Os meus pedidos"],
+              ["/conta", "A minha conta"],
+            ].map(([destino, titulo]) => (
+              <Link
+                key={destino}
+                to={destino}
+                className={`rounded-full px-3 py-2 font-semibold transition-colors hover:bg-brand-mist sm:px-4 ${
+                  rota === destino ? "text-brand-purpleDark" : "text-brand-navy"
+                }`}
+              >
+                {titulo}
+              </Link>
+            ))}
+            <NotificationBell />
+          </nav>
+        </div>
       </header>
       )}
 

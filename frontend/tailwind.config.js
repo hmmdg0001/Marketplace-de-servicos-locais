@@ -46,6 +46,8 @@ export default {
           navy: "#0B2A4A",
           blue: "#0B6FF2",
           blueDark: "#0A5CD2",
+          purple: "#c5acfe",
+          purpleDark: "#b394f5",
           ink: "#16283C",
           muted: "#5B6B7C",
           line: "#E4E9F0",

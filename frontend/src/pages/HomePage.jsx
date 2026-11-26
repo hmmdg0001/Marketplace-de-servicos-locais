@@ -174,7 +174,7 @@ export default function HomePage() {
       <header className="w-full border-b border-brand-line bg-white">
         <div className="container flex h-16 items-center justify-between gap-4">
           <Link to="/" className="font-display text-xl font-extrabold tracking-tight text-brand-navy">
-            servi<span className="text-primary">perto</span>
+            servi<span className="text-brand-purple">perto</span>
           </Link>
           <nav className="flex items-center gap-1 text-sm sm:gap-3" aria-label="Navegação principal">
             <Link
@@ -186,7 +186,7 @@ export default function HomePage() {
             <Link to="/conta" className="rounded-full px-3 py-2 font-medium text-brand-navy hover:bg-brand-mist">
               Entrar
             </Link>
-            <Button asChild size="sm">
+            <Button asChild size="sm" className="bg-brand-purple hover:bg-brand-purpleDark">
               <Link to="/conta">Registar</Link>
             </Button>
             <NotificationBell />
