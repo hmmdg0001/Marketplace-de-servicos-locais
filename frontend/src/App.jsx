@@ -1,4 +1,4 @@
-import { Link, Route, Routes } from "react-router-dom";
+import { Link, Route, Routes, useLocation } from "react-router-dom";
 import HomePage from "./pages/HomePage.jsx";
 import ServiceDetailPage from "./pages/ServiceDetailPage.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
@@ -10,9 +10,13 @@ import AdminPage from "./pages/AdminPage.jsx";
 import { NotificationProvider, NotificationBell } from "./components/NotificationCenter.jsx";
 
 export default function App() {
+  const rota = useLocation().pathname;
+  const eInicio = rota === "/";
+
   return (
     <NotificationProvider>
-    <main className="page-shell">
+    <main className={eInicio ? "page-shell page-shell-home" : "page-shell"}>
+      {!eInicio && (
       <header className="topbar">
         <Link className="brand" to="/" aria-label="ServiPerto, início">
           <span className="brand-mark" aria-hidden="true">s</span>
@@ -26,6 +30,7 @@ export default function App() {
           <NotificationBell />
         </nav>
       </header>
+      )}
 
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -39,7 +44,9 @@ export default function App() {
         <Route path="*" element={<HomePage />} />
       </Routes>
 
-      <footer className="footer"><span>© 2026 ServiPerto</span><span>Feito para aproximar pessoas.</span></footer>
+      {!eInicio && (
+        <footer className="footer"><span>© 2026 ServiPerto</span><span>Feito para aproximar pessoas.</span></footer>
+      )}
     </main>
     </NotificationProvider>
   );
