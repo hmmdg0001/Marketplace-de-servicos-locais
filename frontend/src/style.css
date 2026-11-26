@@ -1,6 +1,28 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
 
-:root{font-family:'DM Sans',sans-serif;color:#242e27;background:#f6f5f0;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;font-optical-sizing:auto;font-weight:400;--green:#1e533d;--muted:#788078}
+:root{
+  --background:0 0% 100%;
+  --foreground:213 47% 16%;
+  --card:0 0% 100%;
+  --card-foreground:213 47% 16%;
+  --primary:214 90% 50%;
+  --primary-foreground:0 0% 100%;
+  --secondary:210 33% 97%;
+  --secondary-foreground:213 47% 16%;
+  --muted:210 33% 97%;
+  --muted-foreground:213 18% 42%;
+  --accent:214 100% 97%;
+  --accent-foreground:214 90% 40%;
+  --destructive:0 55% 49%;
+  --destructive-foreground:0 0% 100%;
+  --border:214 25% 92%;
+  --input:214 25% 92%;
+  --ring:214 90% 50%;
+  --radius:0.75rem;
+}
+
+:root{font-family:'DM Sans',sans-serif;color:#16283c;background:#f7f9fb;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;font-optical-sizing:auto;font-weight:400;--green:#1e533d;--muted:#788078}
 *{box-sizing:border-box}
 body{margin:0;min-width:320px;min-height:100vh}
 button,input{font:inherit}
@@ -176,6 +198,8 @@ form select:invalid{color:#b0b4ad}
 .slot{border:1px solid #d9ded1;background:#fffefa;border-radius:4px;padding:9px 4px;font:700 11px Manrope,sans-serif;color:#3d4a3f;cursor:pointer}
 .slot:hover{border-color:#81916b;background:#f3f5ee}
 .slot.selecionado{background:#28563e;color:#fff;border-color:#28563e}
+.page-shell-home{padding:0!important;max-width:none!important}
+@tailwind utilities;
 .regras-tempo-form{border:1px solid #e7e8e1;border-radius:5px;background:#fafaf6;padding:14px 16px;margin:16px 0}
 .regras-tempo-form legend{font-size:11px;font-weight:700;color:#28563e;padding:0 6px}
 .regras-tempo-form label{display:block;font-size:10px;color:#7d857b;margin-bottom:10px}
