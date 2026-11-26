@@ -88,7 +88,7 @@ export default function ProviderPage() {
         <Card className="mt-6 overflow-hidden">
           <div className="h-24 bg-brand-navy" />
           <CardContent className="px-6 pb-8 md:px-10">
-            <div className="-mt-12 flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-primary font-display text-3xl font-extrabold text-white shadow-soft">
+            <div className="-mt-12 flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-primary font-display text-3xl font-extrabold text-brand-navy shadow-soft">
               {nome.charAt(0).toUpperCase()}
             </div>
             <div className="mt-4 flex flex-wrap items-start justify-between gap-6">

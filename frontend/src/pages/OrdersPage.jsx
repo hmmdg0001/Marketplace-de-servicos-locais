@@ -136,7 +136,7 @@ export default function OrdersPage() {
               aria-selected={papel === chave}
               onClick={() => mudarPapel(chave)}
               className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-                papel === chave ? "bg-primary text-white" : "text-brand-muted hover:text-brand-navy"
+                papel === chave ? "bg-primary text-brand-navy" : "text-brand-muted hover:text-brand-navy"
               }`}
             >
               {titulo}

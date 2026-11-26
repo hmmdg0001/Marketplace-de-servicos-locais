@@ -44,8 +44,8 @@ export default {
         },
         brand: {
           navy: "#0B2A4A",
-          blue: "#0B6FF2",
-          blueDark: "#0A5CD2",
+          blue: "#c5acfe",
+          blueDark: "#b394f5",
           purple: "#c5acfe",
           purpleDark: "#b394f5",
           ink: "#16283C",

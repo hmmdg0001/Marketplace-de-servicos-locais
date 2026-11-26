@@ -349,7 +349,7 @@ export default function ServiceDetailPage() {
                     <li
                       key={nome}
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                        etapa === indice + 1 ? "bg-primary text-white" : "bg-brand-mist text-brand-muted"
+                        etapa === indice + 1 ? "bg-primary text-brand-navy" : "bg-brand-mist text-brand-muted"
                       }`}
                     >
                       {indice + 1}. {nome}
@@ -449,7 +449,7 @@ export default function ServiceDetailPage() {
                               onClick={() => setSlotEscolhido(slot.inicio)}
                               className={`rounded-lg border px-2 py-2 text-sm font-semibold transition-colors ${
                                 slotEscolhido === slot.inicio
-                                  ? "border-primary bg-primary text-white"
+                                  ? "border-primary bg-primary text-brand-navy"
                                   : "border-brand-line bg-white text-brand-navy hover:bg-brand-mist"
                               }`}
                             >

@@ -367,7 +367,7 @@ export default function HomePage() {
                           className="h-40 w-full object-cover"
                           loading="lazy"
                         />
-                        <div className="absolute -bottom-5 left-4 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-primary font-display text-sm font-extrabold text-white shadow-soft">
+                        <div className="absolute -bottom-5 left-4 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-primary font-display text-sm font-extrabold text-brand-navy shadow-soft">
                           {(servico.prestador?.nome || "S").charAt(0)}
                         </div>
                       </div>

@@ -6,8 +6,8 @@
   --foreground:213 47% 16%;
   --card:0 0% 100%;
   --card-foreground:213 47% 16%;
-  --primary:214 90% 50%;
-  --primary-foreground:0 0% 100%;
+  --primary:258 98% 84%;
+  --primary-foreground:213 47% 16%;
   --secondary:210 33% 97%;
   --secondary-foreground:213 47% 16%;
   --muted:210 33% 97%;
@@ -18,7 +18,7 @@
   --destructive-foreground:0 0% 100%;
   --border:214 25% 92%;
   --input:214 25% 92%;
-  --ring:214 90% 50%;
+  --ring:258 98% 84%;
   --radius:0.75rem;
 }
 

@@ -211,7 +211,7 @@ export default function AdminPage() {
               type="button"
               onClick={() => setAba(chave)}
               className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                aba === chave ? "bg-primary text-white" : "text-brand-muted hover:bg-brand-mist"
+                aba === chave ? "bg-primary text-brand-navy" : "text-brand-muted hover:bg-brand-mist"
               }`}
             >
               <Icone className="h-4 w-4" /> {titulo}
