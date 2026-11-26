@@ -297,7 +297,7 @@ export default function HomePage() {
 
             <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {categories.map((item) => (
-                <button key={item._id} type="button" onClick={() => escolherCategoria(item.slug)} className="group text-left">
+                <button key={item._id} type="button" onClick={() => escolherCategoria(item.slug)} className="group border-0 bg-transparent p-0 text-left">
                   <Card className={`overflow-hidden border-0 transition-all group-hover:-translate-y-1 group-hover:shadow-lift ${categoria === item.slug ? "ring-2 ring-primary" : ""}`}>
                     <img
                       src={foto(FOTOS_CATEGORIA[item.slug] || "limpeza-casa")}
