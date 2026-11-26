@@ -8,8 +8,26 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  CheckCircle2,
+  ClipboardList,
+  LogOut,
+  Mail,
+  MapPin,
+  Phone,
+  Settings2,
+  ShieldCheck,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { auth } from "../firebase.js";
 import { PORTUGAL_CITIES } from "../data/cities.js";
+import { Button } from "../components/ui/button.jsx";
+import { Badge } from "../components/ui/badge.jsx";
+import { Card, CardContent } from "../components/ui/card.jsx";
+import { Input } from "../components/ui/input.jsx";
 
 const apiBase = "/api";
 
@@ -55,6 +73,15 @@ function apiErrorMessage(res, data, fallback) {
   return fallback;
 }
 
+function Campo({ titulo, children }) {
+  return (
+    <label className="block">
+      <span className="text-xs font-semibold text-brand-muted">{titulo}</span>
+      {children}
+    </label>
+  );
+}
+
 export default function AccountPage() {
   const [authTab, setAuthTab] = useState("register");
   const [name, setName] = useState("");
@@ -67,9 +94,9 @@ export default function AccountPage() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [role, setRole] = useState("user");
-  const [profile, setProfile] = useState(null); // { user, provider }
+  const [profile, setProfile] = useState(null);
   const [profileForm, setProfileForm] = useState({ name: "", telefone: "", cidade: "", bio: "", zona: "" });
-  const [panel, setPanel] = useState(null); // null | "profile"
+  const [panel, setPanel] = useState(null);
   const [resetEmail, setResetEmail] = useState("");
   const [showResetForm, setShowResetForm] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
@@ -334,257 +361,276 @@ export default function AccountPage() {
     }
   }
 
+  if (!authReady) {
+    return <div className="min-h-screen bg-brand-mist py-20 text-center text-brand-muted">A carregar…</div>;
+  }
+
+  const autenticado = authReady && user;
+
   return (
-      <section className="auth-layout" id="inicio">
-        <div className={`intro-panel ${authReady && user ? "intro-panel-account" : ""}`}>
-          {authReady && user ? (
-            <>
-              <div className="eyebrow"><span className="eyebrow-dot" /> A minha conta</div>
-              <h1>Olá, <em>{displayName || "bem-vindo/a"}</em>.</h1>
-              <p className="intro-copy">Gere os teus serviços e pedidos a partir daqui.</p>
-              <div className="account-quick-links">
-                <a className="submit-button" href="/servicos">
-                  Os meus serviços
-                </a>
-                <a className="submit-button" href="/pedidos">
-                  Serviços que pedi
-                </a>
-                {role === "admin" && (
-                  <a className="submit-button" href="/admin">
-                    Painel de administração
-                  </a>
-                )}
-              </div>
-            </>
+    <div className="min-h-screen bg-brand-mist px-5 py-10 font-sans text-brand-ink [&_a]:no-underline">
+      <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[.9fr_1.1fr]">
+        <div className="flex flex-col justify-between rounded-3xl bg-brand-navy p-8 text-white md:p-10">
+          <div>
+            <Badge variant="outline" className="border-white/25 bg-white/10 text-white">
+              {autenticado ? "A minha conta" : "A comunidade começa aqui"}
+            </Badge>
+            <h1 className="mt-6 font-display text-4xl font-extrabold leading-tight tracking-tight text-white md:text-5xl">
+              {autenticado ? (
+                <>Olá, <span className="text-sky-300">{displayName || "bem-vindo/a"}</span>.</>
+              ) : (
+                <>Há sempre alguém <span className="text-sky-300">perto</span> que sabe ajudar.</>
+              )}
+            </h1>
+            <p className="mt-5 max-w-md leading-relaxed text-white/70">
+              {autenticado
+                ? "Gere os teus serviços e pedidos a partir daqui."
+                : "Encontra profissionais de confiança na tua zona ou dá a conhecer o teu talento à comunidade."}
+            </p>
+          </div>
+
+          {autenticado ? (
+            <div className="mt-10 grid gap-3">
+              <Button asChild variant="outline" className="justify-start border-white/25 bg-white text-brand-navy hover:bg-white/90">
+                <a href="/servicos"><BriefcaseBusiness className="h-4 w-4" /> Os meus serviços</a>
+              </Button>
+              <Button asChild variant="outline" className="justify-start border-white/25 bg-white text-brand-navy hover:bg-white/90">
+                <a href="/pedidos"><ClipboardList className="h-4 w-4" /> Serviços que pedi</a>
+              </Button>
+              {role === "admin" && (
+                <Button asChild variant="outline" className="justify-start border-white/25 bg-white text-brand-navy hover:bg-white/90">
+                  <a href="/admin"><ShieldCheck className="h-4 w-4" /> Painel de administração</a>
+                </Button>
+              )}
+            </div>
           ) : (
-            <>
-              <div className="eyebrow"><span className="eyebrow-dot" /> A comunidade começa aqui</div>
-              <h1>Há sempre alguém <em>por perto</em> que sabe como ajudar.</h1>
-              <p className="intro-copy">Encontra profissionais de confiança na tua zona ou dá a conhecer o teu talento à comunidade.</p>
-              <div className="neighbourhood-card">
-                <div className="avatar-stack" aria-hidden="true"><span>m</span><span>j</span><span>r</span><span>+</span></div>
-                <p><strong>Talento local, confiança real.</strong><br />Pequenos serviços. Grandes ligações.</p>
+            <div className="mt-10 flex items-center gap-4 rounded-2xl bg-white/10 p-5">
+              <div className="flex -space-x-2" aria-hidden="true">
+                {["m", "j", "r", "+"].map((letra) => (
+                  <span key={letra} className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-brand-navy bg-sky-200 text-xs font-bold text-brand-navy">
+                    {letra}
+                  </span>
+                ))}
               </div>
-              <div className="decor decor-one" /><div className="decor decor-two" />
-            </>
+              <p className="text-sm leading-relaxed text-white/80">
+                <strong className="text-white">Talento local, confiança real.</strong><br />
+                Pequenos serviços. Grandes ligações.
+              </p>
+            </div>
           )}
         </div>
 
-        {authReady && user ? (
-          <div className="form-panel account-panel">
-            <div className="account-avatar" aria-hidden="true">{(displayName || user.email || "S").charAt(0).toUpperCase()}</div>
-            <p className="kicker">Sessão iniciada</p>
-            <h2>Olá, {displayName || "bem-vindo/a"}.</h2>
-            <p className="form-subtitle">A tua conta ServiPerto está pronta.</p>
-            <p className="account-email">{user.email}</p>
-
-            {(role === "admin" || profile?.provider) && (
-              <div className="account-badges">
-                {role === "admin" && <span className="role-badge">Administrador</span>}
-                {profile?.provider && <span className="role-badge">Prestador</span>}
-              </div>
-            )}
-
-            {(profile?.user?.cidade || profile?.user?.telefone) && (
-              <p className="account-meta">
-                {profile.user.cidade && <>📍 {profile.user.cidade}</>}
-                {profile.user.cidade && profile.user.telefone && <span aria-hidden="true"> · </span>}
-                {profile.user.telefone && <>📞 {profile.user.telefone}</>}
-              </p>
-            )}
-
-            {profile?.provider && (
-              <p className="account-provider-stats">
-                {profile.provider.totalAvaliacoes > 0
-                  ? `${profile.provider.mediaAvaliacoes.toFixed(1)}/5 em ${profile.provider.totalAvaliacoes} avaliação(ões)`
-                  : "Ainda sem avaliações"}
-              </p>
-            )}
-
-            <p className={`form-message ${emailVerified ? "success" : "error"}`}>
-              {emailVerified ? "Email verificado ✓" : "Email não verificado"}
-            </p>
-
-            {notice.text && <p className={`form-message ${notice.kind}`} role="status">{notice.text}</p>}
-
-            <button className="submit-button" type="button" onClick={handleSignOut} disabled={busy}>
-              {busy ? "A terminar sessão…" : "Terminar sessão"}
-              <span aria-hidden="true">→</span>
-            </button>
-
-            
-
-            {/* Botões de ação - só aparecem quando nenhum painel está aberto */}
-            {panel === null && (
+        <Card>
+          <CardContent className="p-6 md:p-8">
+            {autenticado ? (
               <>
-                <a className="submit-button" href="/servicos">
-                  Criar serviço
-                </a>
-                <button className="submit-button" type="button" onClick={() => { setPanel("profile"); notify(""); }} disabled={busy}>
-                  Minhas definições
-                </button>
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary font-display text-xl font-extrabold text-white">
+                    {(displayName || user.email || "S").charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-brand-muted">Sessão iniciada</p>
+                    <h2 className="font-display text-2xl font-extrabold text-brand-navy">{displayName || "bem-vindo/a"}</h2>
+                  </div>
+                </div>
+
+                <p className="mt-5 inline-flex items-center gap-2 rounded-lg bg-brand-mist p-3 text-sm text-brand-muted">
+                  <Mail className="h-4 w-4 text-primary" /> {user.email}
+                </p>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {role === "admin" && <Badge>Administrador</Badge>}
+                  {profile?.provider && <Badge variant="success"><CheckCircle2 className="h-3.5 w-3.5" /> Prestador</Badge>}
+                  {!emailVerified && <Badge variant="outline">Email por verificar</Badge>}
+                  {emailVerified && <Badge variant="success"><CheckCircle2 className="h-3.5 w-3.5" /> Email verificado</Badge>}
+                </div>
+
+                {(profile?.user?.cidade || profile?.user?.telefone) && (
+                  <div className="mt-4 flex flex-wrap gap-4 text-sm text-brand-muted">
+                    {profile.user.cidade && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4 text-primary" /> {profile.user.cidade}</span>}
+                    {profile.user.telefone && <span className="inline-flex items-center gap-1"><Phone className="h-4 w-4 text-primary" /> {profile.user.telefone}</span>}
+                  </div>
+                )}
+
+                {profile?.provider && (
+                  <p className="mt-4 inline-flex items-center gap-2 text-sm text-brand-muted">
+                    <Star className="h-4 w-4 text-amber-500" />
+                    {profile.provider.totalAvaliacoes > 0
+                      ? `${profile.provider.mediaAvaliacoes.toFixed(1)}/5 em ${profile.provider.totalAvaliacoes} avaliações`
+                      : "Ainda sem avaliações"}
+                  </p>
+                )}
+
+                {notice.text && (
+                  <p className={`mt-5 rounded-lg p-3 text-sm ${notice.kind === "error" ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`} role="status">
+                    {notice.text}
+                  </p>
+                )}
+
+                {panel === null ? (
+                  <div className="mt-6 grid gap-3">
+                    <Button type="button" onClick={() => { setPanel("profile"); notify(""); }} disabled={busy} className="justify-start">
+                      <Settings2 className="h-4 w-4" /> Minhas definições
+                    </Button>
+                    <Button asChild variant="outline" className="justify-start">
+                      <a href="/servicos"><BriefcaseBusiness className="h-4 w-4" /> Criar serviço</a>
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleSignOut} disabled={busy} className="justify-start">
+                      <LogOut className="h-4 w-4" /> {busy ? "A terminar sessão…" : "Terminar sessão"}
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleProfileUpdate} className="mt-6 space-y-4 border-t border-brand-line pt-6">
+                    <h3 className="font-display text-lg font-bold text-brand-navy">O meu perfil</h3>
+                    <Campo titulo="Nome">
+                      <Input type="text" value={profileForm.name} onChange={(event) => setProfileField("name", event.target.value)} className="mt-2" required />
+                    </Campo>
+                    <Campo titulo="Email">
+                      <Input type="email" value={user.email || ""} readOnly className="mt-2 bg-brand-mist" />
+                    </Campo>
+                    <Campo titulo="Telefone">
+                      <Input type="tel" value={profileForm.telefone} onChange={(event) => setProfileField("telefone", event.target.value)} placeholder="Opcional" className="mt-2" />
+                    </Campo>
+                    <Campo titulo="Concelho">
+                      <select value={profileForm.cidade} onChange={(event) => setProfileField("cidade", event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-brand-line bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">Escolhe o teu concelho</option>
+                        {PORTUGAL_CITIES.map((group) => (
+                          <optgroup key={group.district} label={group.district}>
+                            {group.cities.map((city) => <option key={city} value={city}>{city}</option>)}
+                          </optgroup>
+                        ))}
+                      </select>
+                    </Campo>
+                    <Campo titulo="Sobre mim">
+                      <textarea rows={3} value={profileForm.bio} onChange={(event) => setProfileField("bio", event.target.value)} placeholder="Uma pequena apresentação para os clientes" className="mt-2 w-full rounded-lg border border-brand-line bg-white p-3 text-sm outline-none focus:ring-2 focus:ring-primary" />
+                    </Campo>
+                    <Campo titulo="Zona de atendimento">
+                      <select value={profileForm.zona} onChange={(event) => setProfileField("zona", event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-brand-line bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">Escolhe a zona</option>
+                        {PORTUGAL_CITIES.map((group) => (
+                          <optgroup key={group.district} label={group.district}>
+                            {group.cities.map((city) => <option key={city} value={city}>{city}</option>)}
+                          </optgroup>
+                        ))}
+                      </select>
+                    </Campo>
+                    <p className="text-xs text-brand-muted">A descrição e a zona aparecem na tua página de prestador.</p>
+
+                    {emailVerified ? (
+                      <p className="inline-flex items-center gap-2 text-sm text-emerald-700"><CheckCircle2 className="h-4 w-4" /> Email verificado</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-3">
+                        <Button type="button" variant="outline" onClick={handleSendVerification} disabled={busy}>
+                          {busy ? "A enviar…" : "Enviar email de verificação"}
+                        </Button>
+                        {verificationSent && (
+                          <Button type="button" variant="outline" onClick={handleCheckVerification} disabled={busy}>
+                            Já confirmei o email
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-3 pt-2">
+                      <Button type="submit" disabled={busy}>{busy ? "A guardar…" : "Guardar alterações"}</Button>
+                      <Button type="button" variant="outline" onClick={() => { setPanel(null); notify(""); }} disabled={busy}>Voltar</Button>
+                    </div>
+                  </form>
+                )}
+
+                {panel === "profile" && (
+                  <div className="mt-6 rounded-xl border border-red-200 p-5">
+                    <h3 className="font-display font-bold text-red-700">Zona de perigo</h3>
+                    <p className="mt-2 text-sm text-brand-muted">Apaga a conta, serviços, pedidos e avaliações. Não se pode anular.</p>
+                    <Button type="button" variant="outline" onClick={handleDeleteAccount} disabled={busy} className="mt-4 border-red-200 text-red-700 hover:bg-red-50">
+                      <Trash2 className="h-4 w-4" /> Eliminar a minha conta
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="text-center">
+                  <Badge variant="outline" className="uppercase tracking-widest text-brand-muted">A tua próxima ligação</Badge>
+                  <h2 className="mt-4 font-display text-3xl font-extrabold text-brand-navy md:text-4xl">
+                    {isRegister ? "Junta-te à vizinhança." : "Que bom ver-te."}
+                  </h2>
+                  <p className="mt-2 text-brand-muted">
+                    {isRegister ? "Cria a tua conta gratuitamente." : "Entra na tua conta para continuar."}
+                  </p>
+                </div>
+
+                <div className="mt-6 inline-flex w-full rounded-full bg-brand-mist p-1" role="tablist" aria-label="Tipo de acesso">
+                  {[
+                    ["register", "Criar conta"],
+                    ["login", "Iniciar sessão"],
+                  ].map(([chave, titulo]) => (
+                    <button
+                      key={chave}
+                      type="button"
+                      role="tab"
+                      aria-selected={isRegister === (chave === "register")}
+                      onClick={() => changeTab(chave)}
+                      className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                        isRegister === (chave === "register") ? "bg-white text-brand-navy shadow-soft" : "text-brand-muted"
+                      }`}
+                    >
+                      {titulo}
+                    </button>
+                  ))}
+                </div>
+
+                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                  {isRegister && (
+                    <Campo titulo="Como te chamas?">
+                      <Input autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="O teu nome" className="mt-2" required />
+                    </Campo>
+                  )}
+                  <Campo titulo="Email">
+                    <Input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="ola@exemplo.pt" className="mt-2" required />
+                  </Campo>
+                  <Campo titulo="Palavra-passe">
+                    <Input type="password" autoComplete={isRegister ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Pelo menos 6 caracteres" minLength={6} className="mt-2" required />
+                  </Campo>
+                  {notice.text && (
+                    <p className={`rounded-lg p-3 text-sm ${notice.kind === "error" ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`} role="status">
+                      {notice.text}
+                    </p>
+                  )}
+                  <Button type="submit" disabled={busy} className="w-full">
+                    {busy ? "A processar…" : isRegister ? "Criar a minha conta" : "Entrar na minha conta"}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </form>
+
+                {!isRegister && !showResetForm && (
+                  <button type="button" onClick={() => { setShowResetForm(true); notify(""); }} className="mt-4 text-sm font-semibold text-primary hover:underline">
+                    Esqueci a minha palavra-passe
+                  </button>
+                )}
+
+                {showResetForm && (
+                  <form onSubmit={handleResetSubmit} className="mt-5 space-y-4 rounded-xl border border-brand-line p-5">
+                    <h3 className="font-display font-bold text-brand-navy">Reset de palavra-passe</h3>
+                    <p className="text-sm text-brand-muted">Introduz o email da tua conta para receberes um link de reset.</p>
+                    <Campo titulo="Email">
+                      <Input type="email" value={resetEmail} onChange={(event) => setResetEmail(event.target.value)} placeholder="ola@exemplo.pt" className="mt-2" required />
+                    </Campo>
+                    <div className="flex flex-wrap gap-3">
+                      <Button type="submit" disabled={busy}>{busy ? "A enviar…" : "Enviar link de reset"}</Button>
+                      <Button type="button" variant="outline" onClick={() => { setShowResetForm(false); notify(""); }} disabled={busy}>Cancelar</Button>
+                    </div>
+                  </form>
+                )}
+
+                <p className="mt-6 text-center text-xs text-brand-muted">
+                  Ao continuar, aceitas os nossos <a href="#termos" className="text-primary hover:underline">Termos de utilização</a> e a <a href="#privacidade" className="text-primary hover:underline">Política de privacidade</a>.
+                </p>
               </>
             )}
-
-            {/* Painel: definições / perfil */}
-            {panel === "profile" && (
-              <div className="settings-section">
-                <h3>O meu perfil</h3>
-                <form onSubmit={handleProfileUpdate}>
-                  <label>
-                    Nome
-                    <input
-                      type="text"
-                      name="name"
-                      value={profileForm.name}
-                      onChange={(event) => setProfileField("name", event.target.value)}
-                      required
-                    />
-                  </label>
-                  <label>Email<input type="email" name="email" value={user.email || ""} readOnly /></label>
-                  <label>
-                    Telefone
-                    <input
-                      type="tel"
-                      name="telefone"
-                      value={profileForm.telefone}
-                      onChange={(event) => setProfileField("telefone", event.target.value)}
-                      placeholder="Opcional"
-                    />
-                  </label>
-                  <label>
-                    Concelho
-                    <select
-                      name="cidade"
-                      value={profileForm.cidade}
-                      onChange={(event) => setProfileField("cidade", event.target.value)}
-                    >
-                      <option value="">Escolhe o teu concelho</option>
-                      {PORTUGAL_CITIES.map((group) => (
-                        <optgroup key={group.district} label={group.district}>
-                          {group.cities.map((city) => (
-                            <option key={city} value={city}>{city}</option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Sobre mim
-                    <textarea
-                      name="bio"
-                      rows={3}
-                      value={profileForm.bio}
-                      onChange={(event) => setProfileField("bio", event.target.value)}
-                      placeholder="Uma pequena apresentação para os clientes"
-                    />
-                  </label>
-                  <label>
-                    Zona de atendimento
-                    <select
-                      name="zona"
-                      value={profileForm.zona}
-                      onChange={(event) => setProfileField("zona", event.target.value)}
-                    >
-                      <option value="">Escolhe a zona</option>
-                      {PORTUGAL_CITIES.map((group) => (
-                        <optgroup key={group.district} label={group.district}>
-                          {group.cities.map((city) => (
-                            <option key={city} value={city}>{city}</option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
-                  </label>
-                  <p className="field-hint">A descrição e a zona de atendimento aparecem na página dos teus serviços.</p>
-
-                  {emailVerified ? (
-                    <p className="form-message success">Email verificado ✓</p>
-                  ) : (
-                    <>
-                      <button className="submit-button" type="button" onClick={handleSendVerification} disabled={busy}>
-                        {busy ? "A enviar…" : "Enviar email de verificação"}
-                      </button>
-                      {verificationSent && (
-                        <button className="submit-button" type="button" onClick={handleCheckVerification} disabled={busy}>
-                          Já confirmei o email
-                        </button>
-                      )}
-                    </>
-                  )}
-
-                  <button className="submit-button" type="submit" disabled={busy}>
-                    {busy ? "A salvar…" : "Guardar alterações"}
-                  </button>
-                  <button className="submit-button" type="button" onClick={() => { setPanel(null); notify(""); }} disabled={busy}>
-                    Voltar
-                  </button>
-                </form>
-
-                <div className="account-danger-zone">
-                  <p>Apaga a tua conta, serviços, pedidos e avaliações. Não se pode anular.</p>
-                  <button className="submit-button" type="button" onClick={handleDeleteAccount} disabled={busy}>
-                    Eliminar a minha conta
-                  </button>
-                </div>
-              </div>
-            )}
-
-          </div>
-        ) : (
-          <div className="form-panel">
-            <div className="form-heading">
-              <div className="form-icon" aria-hidden="true">✳</div>
-              <p className="kicker">A tua próxima ligação começa aqui</p>
-              <h2>{isRegister ? "Junta-te à vizinhança." : "Que bom ver-te."}</h2>
-              <p className="form-subtitle">
-                {isRegister ? "Cria a tua conta gratuitamente." : "Entra na tua conta para continuar."}
-              </p>
-            </div>
-
-            <div className="mode-switch" role="tablist" aria-label="Tipo de acesso">
-              <button type="button" role="tab" aria-selected={isRegister} className={isRegister ? "selected" : ""} onClick={() => changeTab("register")}>Criar conta</button>
-              <button type="button" role="tab" aria-selected={!isRegister} className={!isRegister ? "selected" : ""} onClick={() => changeTab("login")}>Iniciar sessão</button>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              {isRegister && <label>Como te chamas?<input autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="O teu nome" required /></label>}
-              <label>Email<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="ola@exemplo.pt" required /></label>
-              <label>Palavra-passe<input type="password" autoComplete={isRegister ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Pelo menos 6 caracteres" minLength={6} required /></label>
-              {notice.text && <p className={`form-message ${notice.kind}`} role="status">{notice.text}</p>}
-              <button className="submit-button" type="submit" disabled={busy}>
-                {busy ? "A processar…" : isRegister ? "Criar a minha conta" : "Entrar na minha conta"}
-                <span aria-hidden="true">→</span>
-              </button>
-            </form>
-
-            {!isRegister && !showResetForm && (
-              <p>
-                <a onClick={() => { setShowResetForm(true); notify(""); }} style={{ cursor: "pointer", textDecoration: "underline" }}>
-                  Esqueci a minha palavra-passe
-                </a>
-              </p>
-            )}
-
-            {showResetForm && (
-              <div className="reset-section">
-                <h3>Reset de palavra-passe</h3>
-                <p>Introduz o email da tua conta para receber um link de reset.</p>
-                <form onSubmit={handleResetSubmit}>
-                  <label>Email<input type="email" value={resetEmail} onChange={(event) => setResetEmail(event.target.value)} placeholder="ola@exemplo.pt" required /></label>
-                  <button className="submit-button" type="submit" disabled={busy}>
-                    {busy ? "A enviar…" : "Enviar link de reset"}
-                  </button>
-                  <button className="submit-button" type="button" onClick={() => { setShowResetForm(false); notify(""); }} disabled={busy}>
-                    Cancelar
-                  </button>
-                </form>
-              </div>
-            )}
-
-            <p className="terms">Ao continuar, aceitas os nossos <a href="#termos">Termos de utilização</a> e a <a href="#privacidade">Política de privacidade</a>.</p>
-          </div>
-        )}
-      </section>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
