@@ -1,8 +1,22 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  MapPin,
+  ShieldCheck,
+  Star,
+} from "lucide-react";
 import { auth } from "../firebase.js";
 import { apiBase, readJson, apiErrorMessage, formatPrice, formatDate } from "../lib/api.js";
+import { Button } from "../components/ui/button.jsx";
+import { Badge } from "../components/ui/badge.jsx";
+import { Card, CardContent } from "../components/ui/card.jsx";
+import { Input } from "../components/ui/input.jsx";
 
 function hoje() {
   return new Date().toISOString().slice(0, 10);
@@ -10,6 +24,19 @@ function hoje() {
 
 function horaCurta(iso) {
   return new Date(iso).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
+}
+
+function Estrelas({ nota, vazias = 0 }) {
+  return (
+    <span className="inline-flex items-center gap-0.5 text-amber-500" aria-label={`${nota} de 5`}>
+      {Array.from({ length: nota }).map((_, i) => (
+        <Star key={`cheia-${i}`} className="h-4 w-4 fill-current" />
+      ))}
+      {Array.from({ length: vazias }).map((_, i) => (
+        <Star key={`vazia-${i}`} className="h-4 w-4 text-brand-line" />
+      ))}
+    </span>
+  );
 }
 
 export default function ServiceDetailPage() {
@@ -212,272 +239,296 @@ export default function ServiceDetailPage() {
   }
 
   if (loading) {
-    return <section className="catalog-page"><p className="catalog-count">A carregar serviço…</p></section>;
+    return <div className="min-h-screen bg-brand-mist py-20 text-center text-brand-muted">A carregar serviço…</div>;
   }
 
   if (error || !service) {
     return (
-      <section className="catalog-page">
-        <p className="form-message error">{error || "Serviço não encontrado."}</p>
-        <Link className="link-button" to="/">← Voltar ao catálogo</Link>
-      </section>
+      <div className="min-h-screen bg-brand-mist px-5 py-20 text-center">
+        <p className="text-brand-muted">{error || "Serviço não encontrado."}</p>
+        <Button asChild variant="outline" className="mt-6">
+          <Link to="/">← Voltar ao catálogo</Link>
+        </Button>
+      </div>
     );
   }
 
   const media = service.prestador?.mediaAvaliacoes || 0;
   const totalAvaliacoes = service.prestador?.totalAvaliacoes || 0;
   const proprio = user?.uid === service.prestador?.uid;
+  const etapas = temParametros ? ["Dados", "Duração", "Horário"] : ["Dados", "Horário"];
 
   return (
-    <section className="catalog-page">
-      <nav className="breadcrumb" aria-label="Caminho">
-        <Link to="/">Explorar</Link>
-        <span>/</span>
-        <Link to={`/?categoria=${service.categoria?.slug || ""}`}>{service.categoria?.nome || "Serviço"}</Link>
-      </nav>
+    <div className="min-h-screen bg-brand-mist font-sans text-brand-ink [&_a]:no-underline">
+      <div className="mx-auto max-w-6xl px-5 py-6">
+        <nav className="flex items-center gap-2 text-sm text-brand-muted" aria-label="Caminho">
+          <Link to="/" className="hover:text-primary">Explorar</Link>
+          <span>/</span>
+          <Link to={`/?categoria=${service.categoria?.slug || ""}`} className="hover:text-primary">
+            {service.categoria?.nome || "Serviço"}
+          </Link>
+        </nav>
 
-      <div className="service-detail">
-        <div className="service-detail-gallery" aria-label="Fotografias do serviço">
-          {service.imagens && service.imagens.length > 0 ? (
-            <div className="gallery">
-              <img src={service.imagens[0]} alt={service.titulo} className="gallery-main" />
-              {service.imagens.length > 1 && (
-                <div className="gallery-thumbs">
-                  {service.imagens.slice(1).map((img, i) => (
-                    <img key={i} src={img} alt={`${service.titulo} ${i + 2}`} className="gallery-thumb" />
-                  ))}
-                </div>
+        <div className="mt-6 grid gap-8 lg:grid-cols-[1.05fr_.95fr]">
+          <div className="overflow-hidden rounded-2xl bg-white shadow-card">
+            {service.imagens?.length > 0 ? (
+              <>
+                <img src={service.imagens[0]} alt={service.titulo} className="h-[360px] w-full object-cover md:h-[420px]" />
+                {service.imagens.length > 1 && (
+                  <div className="flex gap-2 overflow-x-auto p-3">
+                    {service.imagens.slice(1).map((img, i) => (
+                      <img key={i} src={img} alt={`${service.titulo} ${i + 2}`} className="h-16 w-20 rounded-lg object-cover" />
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex h-[360px] items-center justify-center text-brand-muted">Sem fotografias</div>
+            )}
+          </div>
+
+          <div>
+            <Badge variant="outline" className="uppercase tracking-widest text-brand-muted">
+              {service.categoria?.nome || "Serviço"}
+            </Badge>
+            <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-tight text-brand-navy md:text-5xl">
+              {service.titulo}
+            </h1>
+            <p className="mt-4 text-sm text-brand-muted">
+              Prestador:{" "}
+              <Link to={`/prestador/${service.prestador?.uid || ""}`} className="font-semibold text-primary hover:underline">
+                {service.prestador?.nome}
+              </Link>
+              <span className="mx-2">·</span>
+              <MapPin className="inline h-3.5 w-3.5" /> {service.zona || service.prestador?.zona}
+            </p>
+
+            <div className="mt-3 flex items-center gap-2 text-sm">
+              {totalAvaliacoes > 0 ? (
+                <>
+                  <Estrelas nota={Math.round(media)} vazias={5 - Math.round(media)} />
+                  <span className="text-brand-muted">{media.toFixed(1)}/5 · {totalAvaliacoes} avaliações</span>
+                </>
+              ) : (
+                <span className="text-brand-muted">Ainda sem avaliações</span>
               )}
             </div>
-          ) : (
-            <div className="gallery-placeholder">Sem fotografias</div>
-          )}
-        </div>
 
-        <div className="service-detail-info">
-          <p className="catalog-card-category">{service.categoria?.nome}</p>
-          <h1>{service.titulo}</h1>
-          <p className="service-detail-provider">
-            Prestador:{" "}
-            <Link to={`/prestador/${service.prestador?.uid || ""}`}>
-              <strong>{service.prestador?.nome}</strong>
-            </Link>
-            {" · "}
-            📍 {service.zona || service.prestador?.zona}
-          </p>
+            <p className="mt-6 leading-relaxed text-brand-muted">{service.descricao}</p>
 
-          <p className="service-detail-rating">
-            {totalAvaliacoes > 0
-              ? `Classificação: ${media.toFixed(1)}/5 (${totalAvaliacoes} avaliações)`
-              : "Ainda sem avaliações"}
-          </p>
+            {!service.ativo && <p className="mt-4 text-sm text-red-600">Este serviço está desativado.</p>}
 
-          <p className="service-detail-description">{service.descricao}</p>
+            <p className="mt-7 text-sm text-brand-muted">Desde</p>
+            <p className="font-display text-3xl font-extrabold text-brand-navy">{formatPrice(service.preco)}</p>
 
-          {!service.ativo && <p className="form-message error">Este serviço está desativado.</p>}
+            <div className="mt-7">
+              {authReady && !user && (
+                <div className="space-y-3">
+                  <Button asChild size="lg" className="w-full">
+                    <Link to="/conta">Inicia sessão para pedir este serviço <ArrowRight className="h-4 w-4" /></Link>
+                  </Button>
+                  <p className="text-xs text-brand-muted">Precisas de conta para enviar um pedido ao prestador.</p>
+                </div>
+              )}
+              {user && proprio && (
+                <p className="rounded-xl bg-white p-4 text-sm text-brand-muted shadow-card">Este é um dos teus serviços.</p>
+              )}
+              {user && !proprio && service.ativo && !showForm && (
+                <Button size="lg" className="w-full" onClick={abrirFormulario}>
+                  Pedir este serviço <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
 
-          <p className="service-detail-price">Desde <strong>{formatPrice(service.preco)}</strong></p>
+            {user && !proprio && service.ativo && showForm && (
+              <Card className="mt-6 p-6">
+                <h2 className="font-display text-xl font-bold text-brand-navy">Enviar pedido ao prestador</h2>
 
-          {authReady && !user && (
-            <>
-              <Link className="submit-button" to="/conta">Inicia sessão para pedir este serviço</Link>
-              <p className="service-detail-note">Precisas de conta para enviar um pedido ao prestador.</p>
-            </>
-          )}
+                <ol className="mt-4 flex flex-wrap gap-2">
+                  {etapas.map((nome, indice) => (
+                    <li
+                      key={nome}
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+                        etapa === indice + 1 ? "bg-primary text-white" : "bg-brand-mist text-brand-muted"
+                      }`}
+                    >
+                      {indice + 1}. {nome}
+                    </li>
+                  ))}
+                </ol>
 
-          {user && proprio && (
-            <p className="form-message">Este é um dos teus serviços.</p>
-          )}
-
-          {user && !proprio && service.ativo && !showForm && (
-            <button className="submit-button" type="button" onClick={abrirFormulario}>
-              Pedir este serviço
-            </button>
-          )}
-
-          {user && !proprio && service.ativo && showForm && (
-            <div className="order-form-panel">
-              <h3>Enviar pedido ao prestador</h3>
-              <div className="booking-steps" aria-label="Passos da marcação">
-                <span className={etapa === 1 ? "ativo" : ""}>1. Dados</span>
-                {temParametros && <span className={etapa === 2 ? "ativo" : ""}>2. Duração</span>}
-                <span className={etapa === 3 ? "ativo" : ""}>{temParametros ? "3. Horário" : "2. Horário"}</span>
-              </div>
-
-              <form onSubmit={handleOrderSubmit}>
-                {etapa === 1 && (
-                  <>
-                    <label>
-                      Descrição do trabalho
-                      <textarea
-                        rows={4}
-                        required
-                        value={dados.descricao}
-                        onChange={(event) => atualizarDado("descricao", event.target.value)}
-                        placeholder="Explica o que precisas, o tamanho do espaço, etc."
-                      />
-                    </label>
-                    <label>
-                      Data desejada
-                      <input
-                        type="date"
-                        min={hoje()}
-                        required
-                        value={dados.dataDesejada}
-                        onChange={(event) => atualizarDado("dataDesejada", event.target.value)}
-                      />
-                    </label>
-                    <label>
-                      Morada
-                      <input
-                        type="text"
-                        required
-                        value={dados.morada}
-                        onChange={(event) => atualizarDado("morada", event.target.value)}
-                        placeholder="Rua, número, código postal"
-                      />
-                    </label>
-                    <button className="submit-button" type="button" onClick={avancarDados} disabled={busy}>
-                      {busy ? "A calcular…" : "Continuar"}
-                    </button>
-                    <button className="submit-button" type="button" onClick={() => setShowForm(false)} disabled={busy}>
-                      Cancelar
-                    </button>
-                  </>
-                )}
-
-                {etapa === 2 && temParametros && (
-                  <>
-                    {tipo === "por_m2" ? (
-                      <label>
-                        Área a tratar (m²)
-                        <input
-                          type="number"
-                          min="1"
-                          step="0.5"
+                <form onSubmit={handleOrderSubmit} className="mt-6 space-y-4">
+                  {etapa === 1 && (
+                    <>
+                      <label className="block">
+                        <span className="text-xs font-semibold text-brand-muted">Descrição do trabalho</span>
+                        <textarea
+                          rows={4}
                           required
-                          value={parametros.area}
-                          onChange={(event) => alterarParametro("area", event.target.value)}
-                          placeholder="Ex: 80"
+                          value={dados.descricao}
+                          onChange={(event) => atualizarDado("descricao", event.target.value)}
+                          placeholder="Explica o que precisas, o tamanho do espaço, etc."
+                          className="mt-2 w-full rounded-lg border border-brand-line bg-white p-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                         />
                       </label>
-                    ) : (
-                      <label>
-                        Tipo de veículo
-                        <select
-                          required
-                          value={parametros.opcao}
-                          onChange={(event) => alterarParametro("opcao", event.target.value)}
-                        >
-                          <option value="" disabled>Escolhe uma opção</option>
-                          {Object.entries(opcoes).map(([nome]) => (
-                            <option key={nome} value={nome}>{nome}</option>
-                          ))}
-                        </select>
+                      <label className="block">
+                        <span className="text-xs font-semibold text-brand-muted">Data desejada</span>
+                        <Input type="date" min={hoje()} required value={dados.dataDesejada} onChange={(event) => atualizarDado("dataDesejada", event.target.value)} className="mt-2" />
                       </label>
-                    )}
-
-                    <p className="duracao-estimada">
-                      Duração estimada: <strong>{duracao ? `${duracao.tempoTotal} min` : "por calcular"}</strong>
-                    </p>
-                    <button className="submit-button" type="button" onClick={avancarParametros} disabled={busy}>
-                      {busy ? "A procurar horários…" : "Ver horários disponíveis"}
-                    </button>
-                    <button className="submit-button" type="button" onClick={() => setEtapa(1)} disabled={busy}>
-                      Voltar
-                    </button>
-                  </>
-                )}
-
-                {etapa === 3 && (
-                  <>
-                    <p className="duracao-estimada">
-                      Duração estimada: <strong>{duracao ? `${duracao.tempoTotal} min` : "por calcular"}</strong>
-                      {" · "}Horários das 09h às 18h, em dias úteis.
-                    </p>
-
-                    {aCarregarSlots ? (
-                      <p className="catalog-count">A carregar horários…</p>
-                    ) : slots.length === 0 ? (
-                      <p className="catalog-empty">Não há horários disponíveis para esta data e duração.</p>
-                    ) : (
-                      <div className="slot-grid">
-                        {slots.map((slot) => (
-                          <button
-                            key={slot.inicio}
-                            type="button"
-                            className={slotEscolhido === slot.inicio ? "slot selecionado" : "slot"}
-                            onClick={() => setSlotEscolhido(slot.inicio)}
-                          >
-                            {horaCurta(slot.inicio)}
-                          </button>
-                        ))}
+                      <label className="block">
+                        <span className="text-xs font-semibold text-brand-muted">Morada</span>
+                        <Input type="text" required value={dados.morada} onChange={(event) => atualizarDado("morada", event.target.value)} placeholder="Rua, número, código postal" className="mt-2" />
+                      </label>
+                      <div className="flex flex-wrap gap-3 pt-2">
+                        <Button type="button" onClick={avancarDados} disabled={busy}>
+                          {busy ? "A calcular…" : "Continuar"} <ArrowRight className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => setShowForm(false)} disabled={busy}>
+                          Cancelar
+                        </Button>
                       </div>
-                    )}
+                    </>
+                  )}
 
-                    <p className="field-hint">O valor do serviço é {formatPrice(service.preco)}. O prestador aceita ou recusa o pedido.</p>
-                    {orderError && <p className="form-message error" role="status">{orderError}</p>}
-                    <button className="submit-button" type="submit" disabled={busy || !slotEscolhido}>
-                      {busy ? "A enviar…" : "Enviar pedido"}
-                    </button>
-                    <button className="submit-button" type="button" onClick={() => setEtapa(temParametros ? 2 : 1)} disabled={busy}>
-                      Voltar
-                    </button>
-                  </>
-                )}
+                  {etapa === 2 && temParametros && (
+                    <>
+                      {tipo === "por_m2" ? (
+                        <label className="block">
+                          <span className="text-xs font-semibold text-brand-muted">Área a tratar (m²)</span>
+                          <Input type="number" min="1" step="0.5" required value={parametros.area} onChange={(event) => alterarParametro("area", event.target.value)} placeholder="Ex: 80" className="mt-2" />
+                        </label>
+                      ) : (
+                        <label className="block">
+                          <span className="text-xs font-semibold text-brand-muted">Opção</span>
+                          <select
+                            required
+                            value={parametros.opcao}
+                            onChange={(event) => alterarParametro("opcao", event.target.value)}
+                            className="mt-2 h-11 w-full rounded-lg border border-brand-line bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-primary"
+                          >
+                            <option value="" disabled>Escolhe uma opção</option>
+                            {Object.entries(opcoes).map(([nome]) => (
+                              <option key={nome} value={nome}>{nome}</option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                      <p className="flex items-center gap-2 rounded-xl bg-brand-mist p-4 text-sm text-brand-muted">
+                        <Clock3 className="h-4 w-4 text-primary" />
+                        Duração estimada: <strong className="text-brand-navy">{duracao ? `${duracao.tempoTotal} min` : "por calcular"}</strong>
+                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        <Button type="button" onClick={avancarParametros} disabled={busy}>
+                          {busy ? "A procurar horários…" : "Ver horários disponíveis"}
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => setEtapa(1)} disabled={busy}>Voltar</Button>
+                      </div>
+                    </>
+                  )}
 
-                {etapa !== 3 && orderError && <p className="form-message error" role="status">{orderError}</p>}
-              </form>
+                  {etapa === 3 && (
+                    <>
+                      <p className="flex flex-wrap items-center gap-2 rounded-xl bg-brand-mist p-4 text-sm text-brand-muted">
+                        <Clock3 className="h-4 w-4 text-primary" />
+                        Duração estimada: <strong className="text-brand-navy">{duracao ? `${duracao.tempoTotal} min` : "por calcular"}</strong>
+                        <span>· Horários das 09h às 18h, em dias úteis.</span>
+                      </p>
+
+                      {aCarregarSlots ? (
+                        <p className="text-sm text-brand-muted">A carregar horários…</p>
+                      ) : slots.length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-brand-line p-6 text-center text-sm text-brand-muted">
+                          Não há horários disponíveis para esta data e duração.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                          {slots.map((slot) => (
+                            <button
+                              key={slot.inicio}
+                              type="button"
+                              onClick={() => setSlotEscolhido(slot.inicio)}
+                              className={`rounded-lg border px-2 py-2 text-sm font-semibold transition-colors ${
+                                slotEscolhido === slot.inicio
+                                  ? "border-primary bg-primary text-white"
+                                  : "border-brand-line bg-white text-brand-navy hover:bg-brand-mist"
+                              }`}
+                            >
+                              {horaCurta(slot.inicio)}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      <p className="text-xs text-brand-muted">O valor do serviço é {formatPrice(service.preco)}. O prestador aceita ou recusa o pedido.</p>
+                      <div className="flex flex-wrap gap-3">
+                        <Button type="submit" disabled={busy || !slotEscolhido}>
+                          {busy ? "A enviar…" : "Enviar pedido"} <ArrowRight className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => setEtapa(temParametros ? 2 : 1)} disabled={busy}>
+                          <ArrowLeft className="h-4 w-4" /> Voltar
+                        </Button>
+                      </div>
+                    </>
+                  )}
+
+                  {orderError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{orderError}</p>}
+                </form>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        {service.prestador?.bio && (
+          <Card className="mt-10 p-6 md:p-8">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h2 className="font-display text-xl font-bold text-brand-navy">Sobre o prestador</h2>
+                <p className="mt-3 max-w-2xl leading-relaxed text-brand-muted">{service.prestador.bio}</p>
+                <p className="mt-3 text-sm text-brand-muted">
+                  {service.prestador.nome} · {service.prestador.zona}
+                  {totalAvaliacoes > 0 ? ` · ${media.toFixed(1)}/5` : ""}
+                </p>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link to={`/prestador/${service.prestador?.uid || ""}`}>Ver perfil completo <ArrowRight className="h-4 w-4" /></Link>
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        <section className="mt-12">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-display text-2xl font-extrabold text-brand-navy">Avaliações</h2>
+            <span className="text-sm text-brand-muted">
+              {avaliacoes.length > 0
+                ? `${media.toFixed(1)}/5 · ${avaliacoes.length} ${avaliacoes.length === 1 ? "avaliação verificada" : "avaliações verificadas"}`
+                : "Ainda sem avaliações"}
+            </span>
+          </div>
+
+          {avaliacoes.length === 0 ? (
+            <p className="mt-5 text-sm text-brand-muted">As avaliações aparecem aqui depois de um pedido ser concluído.</p>
+          ) : (
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {avaliacoes.map((avaliacao) => (
+                <Card key={avaliacao._id} className="p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <strong className="text-sm text-brand-navy">{avaliacao.cliente?.nome}</strong>
+                    <Badge variant="success"><CheckCircle2 className="h-3.5 w-3.5" /> Avaliação verificada</Badge>
+                  </div>
+                  <div className="mt-3"><Estrelas nota={avaliacao.classificacao} vazias={5 - avaliacao.classificacao} /></div>
+                  {avaliacao.comentario && <p className="mt-3 text-sm leading-relaxed text-brand-muted">{avaliacao.comentario}</p>}
+                  <p className="mt-4 text-xs text-brand-muted">{formatDate(avaliacao.createdAt)}</p>
+                </Card>
+              ))}
             </div>
           )}
+        </section>
+
+        <div className="mt-10 flex items-center gap-2 text-xs text-brand-muted">
+          <ShieldCheck className="h-4 w-4 text-primary" /> Avaliações apenas de pedidos concluídos e verificados.
         </div>
       </div>
-
-      {service.prestador?.bio && (
-        <div className="provider-card">
-          <h3>Sobre o prestador</h3>
-          <p>{service.prestador.bio}</p>
-          <p className="provider-card-meta">
-            {service.prestador.nome} · {service.prestador.zona}
-            {totalAvaliacoes > 0 ? ` · ${media.toFixed(1)}/5` : ""}
-          </p>
-          <Link className="provider-card-link" to={`/prestador/${service.prestador?.uid || ""}`}>
-            Ver perfil completo →
-          </Link>
-        </div>
-      )}
-
-      <div className="reviews-section">
-        <div className="reviews-head">
-          <h2>Avaliações</h2>
-          <span>
-            {avaliacoes.length > 0
-              ? `${media.toFixed(1)}/5 · ${avaliacoes.length} ${avaliacoes.length === 1 ? "avaliação verificada" : "avaliações verificadas"}`
-              : "Ainda sem avaliações"}
-          </span>
-        </div>
-
-        {avaliacoes.length === 0 ? (
-          <p className="field-hint">As avaliações aparecem aqui depois de um pedido ser concluído.</p>
-        ) : (
-          <ul className="review-list">
-            {avaliacoes.map((avaliacao) => (
-              <li key={avaliacao._id} className="review-item">
-                <div className="review-top">
-                  <strong>{avaliacao.cliente?.nome}</strong>
-                  <span className="verified-badge">Avaliação verificada</span>
-                </div>
-                <p className="review-stars" aria-label={`${avaliacao.classificacao} de 5`}>
-                  {"★".repeat(avaliacao.classificacao)}
-                  <span className="review-stars-empty">{"★".repeat(5 - avaliacao.classificacao)}</span>
-                </p>
-                {avaliacao.comentario && <p className="review-comment">{avaliacao.comentario}</p>}
-                <small className="review-date">{formatDate(avaliacao.createdAt)}</small>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </section>
+    </div>
   );
 }
