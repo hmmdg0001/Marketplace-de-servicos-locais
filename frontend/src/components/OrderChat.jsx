@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { Send } from "lucide-react";
 import { apiBase, readJson, apiErrorMessage, formatDateTime } from "../lib/api.js";
+import { Button } from "./ui/button.jsx";
+import { Input } from "./ui/input.jsx";
+import { Card, CardContent } from "./ui/card.jsx";
 
 // Conversa entre o cliente e o prestador, limitada a este pedido.
 export default function OrderChat({ orderId, user }) {
@@ -61,46 +65,55 @@ export default function OrderChat({ orderId, user }) {
   }
 
   return (
-    <div className="order-chat">
-      <div className="reviews-head">
-        <h2>Conversa sobre o pedido</h2>
-        <span>{mensagens.length} {mensagens.length === 1 ? "mensagem" : "mensagens"}</span>
-      </div>
+    <Card className="mt-8">
+      <CardContent className="p-6 md:p-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-2xl font-extrabold text-brand-navy">Conversa sobre o pedido</h2>
+          <span className="text-sm text-brand-muted">
+            {mensagens.length} {mensagens.length === 1 ? "mensagem" : "mensagens"}
+          </span>
+        </div>
 
-      <div className="chat-messages" ref={listaRef}>
-        {mensagens.length === 0 ? (
-          <p className="catalog-empty">Ainda não há mensagens. Escreve a primeira para combinarem os detalhes.</p>
-        ) : (
-          mensagens.map((mensagem) => {
-            const propria = mensagem.remetenteUid === user.uid;
-            return (
-              <div key={mensagem._id} className={`chat-bubble ${propria ? "propria" : "alheia"}`}>
-                <div className="chat-meta">
-                  <strong>{propria ? "Tu" : mensagem.remetenteNome}</strong>
-                  <span>{formatDateTime(mensagem.criadoEm)}</span>
+        <div ref={listaRef} className="mt-5 max-h-96 space-y-3 overflow-y-auto pr-1">
+          {mensagens.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-brand-line p-6 text-center text-sm text-brand-muted">
+              Ainda não há mensagens. Escreve a primeira para combinarem os detalhes.
+            </p>
+          ) : (
+            mensagens.map((mensagem) => {
+              const propria = mensagem.remetenteUid === user.uid;
+              return (
+                <div
+                  key={mensagem._id}
+                  className={`max-w-[80%] rounded-2xl p-4 ${propria ? "ml-auto bg-primary/10" : "bg-brand-mist"}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <strong className="text-brand-navy">{propria ? "Tu" : mensagem.remetenteNome}</strong>
+                    <span className="text-brand-muted">{formatDateTime(mensagem.criadoEm)}</span>
+                  </div>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-brand-ink">{mensagem.texto}</p>
                 </div>
-                <p>{mensagem.texto}</p>
-              </div>
-            );
-          })
-        )}
-      </div>
+              );
+            })
+          )}
+        </div>
 
-      <form className="chat-form" onSubmit={enviar}>
-        <input
-          type="text"
-          value={texto}
-          onChange={(event) => setTexto(event.target.value)}
-          placeholder="Escreve uma mensagem…"
-          maxLength={2000}
-          aria-label="Mensagem"
-          required
-        />
-        <button className="submit-button compact-button" type="submit" disabled={enviando}>
-          {enviando ? "A enviar…" : "Enviar"}
-        </button>
-      </form>
-      {erro && <p className="form-message error" role="status">{erro}</p>}
-    </div>
+        <form onSubmit={enviar} className="mt-5 flex gap-3">
+          <Input
+            type="text"
+            value={texto}
+            onChange={(event) => setTexto(event.target.value)}
+            placeholder="Escreve uma mensagem…"
+            maxLength={2000}
+            aria-label="Mensagem"
+            required
+          />
+          <Button type="submit" disabled={enviando} className="shrink-0">
+            {enviando ? "A enviar…" : "Enviar"} <Send className="h-4 w-4" />
+          </Button>
+        </form>
+        {erro && <p className="mt-3 text-sm text-red-600">{erro}</p>}
+      </CardContent>
+    </Card>
   );
 }
