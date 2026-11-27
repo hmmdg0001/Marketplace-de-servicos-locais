@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { Clock3, ImagePlus, X } from "lucide-react";
 import { apiBase, readJson, apiErrorMessage } from "../lib/api.js";
 import { PORTUGAL_CITIES } from "../data/cities.js";
+import { Button } from "./ui/button.jsx";
+import { Card, CardContent } from "./ui/card.jsx";
+import { Input } from "./ui/input.jsx";
 
 const MAX_IMAGENS = 6;
 const urlUpload = (cloudName) => `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
@@ -185,12 +189,18 @@ export default function ServiceForm({ user, categories, servico, onSaved, onCanc
     }
   }
 
+  const campoClasse = "mt-2 h-11 w-full rounded-lg border border-brand-line bg-white px-4 text-sm text-brand-ink outline-none focus:ring-2 focus:ring-primary";
+  const rotulo = "block text-xs font-semibold text-brand-muted";
+
   return (
-    <div className="settings-section">
-      <h3>{servico ? "Editar serviço" : "Criar novo serviço"}</h3>
-      <form onSubmit={guardar}>
-        <div className="form-group">
-          <span className="form-label">Fotografias (máx. {MAX_IMAGENS})</span>
+    <Card className="p-6 md:p-8">
+      <h2 className="font-display text-2xl font-extrabold text-brand-navy">
+        {servico ? "Editar serviço" : "Criar novo serviço"}
+      </h2>
+
+      <form onSubmit={guardar} className="mt-6 space-y-5">
+        <div>
+          <span className={rotulo}>Fotografias (máx. {MAX_IMAGENS})</span>
           <input
             type="file"
             ref={inputRef}
@@ -199,148 +209,110 @@ export default function ServiceForm({ user, categories, servico, onSaved, onCanc
             onChange={escolherFicheiros}
             style={{ display: "none" }}
           />
-          <button
-            type="button"
-            className="submit-button"
-            onClick={() => inputRef.current?.click()}
-            disabled={busy || totalImagens >= MAX_IMAGENS}
-          >
+          <Button type="button" variant="outline" onClick={() => inputRef.current?.click()} disabled={busy || totalImagens >= MAX_IMAGENS} className="mt-2">
+            <ImagePlus className="h-4 w-4" />
             {totalImagens > 0 ? `Adicionar mais (${totalImagens}/${MAX_IMAGENS})` : "Adicionar fotografias"}
-          </button>
+          </Button>
           {totalImagens > 0 && (
-            <div className="image-previews">
+            <div className="mt-4 flex flex-wrap gap-3">
               {imagens.map((url, i) => (
-                <div key={`guardada-${url}`} className="image-preview">
-                  <img src={url} alt={`Fotografia ${i + 1}`} />
-                  <button type="button" onClick={() => removerImagem(i)} aria-label="Remover fotografia">×</button>
+                <div key={`guardada-${url}`} className="relative h-20 w-24 overflow-hidden rounded-xl border border-brand-line">
+                  <img src={url} alt={`Fotografia ${i + 1}`} className="h-full w-full object-cover" />
+                  <button type="button" onClick={() => removerImagem(i)} aria-label="Remover fotografia" className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-brand-navy shadow">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               ))}
               {novas.map((nova, i) => (
-                <div key={nova.preview} className="image-preview">
-                  <img src={nova.preview} alt={`Nova fotografia ${i + 1}`} />
-                  <button type="button" onClick={() => removerNova(i)} aria-label="Remover fotografia">×</button>
+                <div key={nova.preview} className="relative h-20 w-24 overflow-hidden rounded-xl border border-brand-line">
+                  <img src={nova.preview} alt={`Nova fotografia ${i + 1}`} className="h-full w-full object-cover" />
+                  <button type="button" onClick={() => removerNova(i)} aria-label="Remover fotografia" className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-brand-navy shadow">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <label>
-          Título do serviço
-          <input
-            type="text"
-            value={valores.titulo}
-            onChange={(event) => campo("titulo", event.target.value)}
-            required
-          />
-        </label>
-        <label>
-          Descrição
-          <input
-            type="text"
-            value={valores.descricao}
-            onChange={(event) => campo("descricao", event.target.value)}
-            placeholder="Descreve o serviço"
-          />
-        </label>
-        <label>
-          Categoria
-          <select
-            value={valores.categoriaId}
-            onChange={(event) => campo("categoriaId", event.target.value)}
-            required
-          >
-            <option value="" disabled>Escolhe a categoria</option>
-            {categories.map((categoria) => (
-              <option key={categoria._id} value={categoria._id}>
-                {categoria.icone} {categoria.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Preço (€)
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={valores.preco}
-            onChange={(event) => campo("preco", event.target.value)}
-            placeholder="Ex: 29.90"
-            required
-          />
-        </label>
-        <label>
-          Localização
-          <select value={valores.zona} onChange={(event) => campo("zona", event.target.value)} required>
-            <option value="" disabled>Escolhe a tua cidade</option>
-            {PORTUGAL_CITIES.map((group) => (
-              <optgroup key={group.district} label={group.district}>
-                {group.cities.map((city) => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </label>
-
-        <fieldset className="regras-tempo-form">
-          <legend>Regras de tempo (duração)</legend>
-          <label>
-            Tipo de cálculo
-            <select value={regras.tipo} onChange={(event) => alterarRegra("tipo", event.target.value)}>
-              <option value="fixo">Fixo</option>
-              <option value="por_m2">Por área (m²)</option>
-              <option value="opcoes">Por opções</option>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <label className={rotulo}>
+            Título do serviço
+            <Input type="text" value={valores.titulo} onChange={(event) => campo("titulo", event.target.value)} className={campoClasse} required />
+          </label>
+          <label className={rotulo}>
+            Descrição
+            <Input type="text" value={valores.descricao} onChange={(event) => campo("descricao", event.target.value)} placeholder="Descreve o serviço" className={campoClasse} />
+          </label>
+          <label className={rotulo}>
+            Categoria
+            <select value={valores.categoriaId} onChange={(event) => campo("categoriaId", event.target.value)} className={campoClasse} required>
+              <option value="" disabled>Escolhe a categoria</option>
+              {categories.map((categoria) => (
+                <option key={categoria._id} value={categoria._id}>{categoria.icone} {categoria.nome}</option>
+              ))}
             </select>
           </label>
-          <label>
-            Tempo base (minutos)
-            <input
-              type="number"
-              min="0"
-              value={regras.tempo_base}
-              onChange={(event) => alterarRegra("tempo_base", event.target.value)}
-              required
-            />
+          <label className={rotulo}>
+            Preço (€)
+            <Input type="number" min="0" step="0.01" value={valores.preco} onChange={(event) => campo("preco", event.target.value)} placeholder="Ex: 29.90" className={campoClasse} required />
           </label>
-          {regras.tipo === "por_m2" && (
-            <label>
-              Minutos por m²
-              <input
-                type="number"
-                min="0"
-                step="0.1"
-                value={regras.fator}
-                onChange={(event) => alterarRegra("fator", event.target.value)}
-                placeholder="Ex: 0.5"
-                required
-              />
+          <label className={`${rotulo} sm:col-span-2`}>
+            Localização
+            <select value={valores.zona} onChange={(event) => campo("zona", event.target.value)} className={campoClasse} required>
+              <option value="" disabled>Escolhe a tua cidade</option>
+              {PORTUGAL_CITIES.map((group) => (
+                <optgroup key={group.district} label={group.district}>
+                  {group.cities.map((city) => <option key={city} value={city}>{city}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <fieldset className="rounded-2xl border border-brand-line bg-brand-mist p-5">
+          <legend className="flex items-center gap-2 px-2 font-display text-sm font-bold text-brand-navy">
+            <Clock3 className="h-4 w-4 text-brand-purpleDark" /> Regras de tempo (duração)
+          </legend>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className={rotulo}>
+              Tipo de cálculo
+              <select value={regras.tipo} onChange={(event) => alterarRegra("tipo", event.target.value)} className={campoClasse}>
+                <option value="fixo">Fixo</option>
+                <option value="por_m2">Por área (m²)</option>
+                <option value="opcoes">Por opções</option>
+              </select>
             </label>
-          )}
-          {regras.tipo === "opcoes" && (
-            <label>
-              Opções (uma por linha: Nome=minutos extra)
-              <textarea
-                rows={3}
-                value={regras.opcoesTexto}
-                onChange={(event) => alterarRegra("opcoesTexto", event.target.value)}
-                placeholder={"Ligeiro=0\nSUV=20"}
-                required
-              />
+            <label className={rotulo}>
+              Tempo base (minutos)
+              <Input type="number" min="0" value={regras.tempo_base} onChange={(event) => alterarRegra("tempo_base", event.target.value)} className={campoClasse} required />
             </label>
-          )}
+            {regras.tipo === "por_m2" && (
+              <label className={rotulo}>
+                Minutos por m²
+                <Input type="number" min="0" step="0.1" value={regras.fator} onChange={(event) => alterarRegra("fator", event.target.value)} placeholder="Ex: 0.5" className={campoClasse} required />
+              </label>
+            )}
+            {regras.tipo === "opcoes" && (
+              <label className={`${rotulo} sm:col-span-2`}>
+                Opções (uma por linha: Nome=minutos extra)
+                <textarea rows={3} value={regras.opcoesTexto} onChange={(event) => alterarRegra("opcoesTexto", event.target.value)} placeholder={"Ligeiro=0\nSUV=20"} className={`${campoClasse} h-auto py-3`} required />
+              </label>
+            )}
+          </div>
         </fieldset>
 
-        {erro && <p className="form-message error" role="status">{erro}</p>}
+        {erro && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700" role="status">{erro}</p>}
 
-        <button className="submit-button" type="submit" disabled={busy}>
-          {busy ? "A guardar…" : servico ? "Guardar alterações" : "Guardar serviço"}
-        </button>
-        <button className="submit-button" type="button" onClick={onCancel} disabled={busy}>
-          Cancelar
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" disabled={busy}>
+            {busy ? "A guardar…" : servico ? "Guardar alterações" : "Guardar serviço"}
+          </Button>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
+            Cancelar
+          </Button>
+        </div>
       </form>
-    </div>
+    </Card>
   );
 }
